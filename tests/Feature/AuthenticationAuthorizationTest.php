@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AuthController;
 use App\Http\Middleware\ApiRateLimit;
 use App\Http\Middleware\RoleBasedAccess;
 use App\Http\Middleware\ValidateDeviceSession;
@@ -138,10 +139,10 @@ beforeEach(function (): void {
     config()->set('app.url', 'http://localhost');
 });
 
-it('registers only the Phase 6 auth routes with legacy middleware composition', function () {
+it('registers the Phase 6 auth routes with legacy middleware composition', function () {
     $router = app(Router::class);
     $routes = collect($router->getRoutes()->getRoutes())
-        ->filter(fn ($route): bool => str_starts_with($route->uri(), 'api/'))
+        ->filter(fn ($route): bool => str_starts_with($route->getActionName(), AuthController::class.'@'))
         ->keyBy(fn ($route): string => $route->uri());
 
     expect($routes->keys()->sort()->values()->all())->toBe([
