@@ -32,13 +32,13 @@ it('registers the SIMDATUK middleware aliases and API middleware order', functio
             SubstituteBindings::class,
         ]);
 
-    $userRoute = collect($router->getRoutes()->getRoutes())
-        ->first(fn ($route) => $route->uri() === 'api/user');
+    $logoutRoute = collect($router->getRoutes()->getRoutes())
+        ->first(fn ($route) => $route->uri() === 'api/logout');
 
-    expect($router->gatherRouteMiddleware($userRoute))
+    expect($router->gatherRouteMiddleware($logoutRoute))
         ->not->toContain(ValidateDeviceSession::class)
         ->not->toContain(CheckPermission::class)
-        ->not->toContain(RoleBasedAccess::class);
+        ->toContain(RoleBasedAccess::class);
 });
 
 it('registers the named API limiter and query macros', function () {
@@ -207,13 +207,13 @@ it('preserves the SIMDATUK production JSON exception envelopes', function () {
         'data' => null,
     ]);
 
-    $this->getJson('/api/user')->assertExactJson([
+    $this->deleteJson('/api/logout')->assertExactJson([
         'code' => 401,
         'message' => 'Anda harus login terlebih dahulu!',
         'data' => null,
     ]);
 
-    $this->postJson('/api/user')->assertExactJson([
+    $this->postJson('/api/logout')->assertExactJson([
         'code' => 405,
         'message' => 'Method yang digunakan salah!',
         'data' => null,
