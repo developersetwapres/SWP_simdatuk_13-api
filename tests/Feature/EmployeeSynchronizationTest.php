@@ -170,6 +170,11 @@ describe('Employee synchronization on the guarded MySQL clone with HTTP fakes', 
         putenv('SIMSDM_URL=https://simsdm.phase20.test');
         putenv('SIMSDM_CLIENT_ID=phase20-client');
         putenv('SIMSDM_CLIENT_SECRET=phase20-secret');
+        config()->set('services.simsdm', [
+            'url' => 'https://simsdm.phase20.test',
+            'client_id' => 'phase20-client',
+            'client_secret' => 'phase20-secret',
+        ]);
         $connection->beginTransaction();
     });
 

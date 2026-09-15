@@ -1,58 +1,75 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# SIMDATUK API — Laravel 13
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Backend API for SIMDATUK (Sistem Manajemen Data Kepegawaian), migrated from Laravel 10 onto a fresh Laravel 13 foundation.
 
-## About Laravel
+## Database safety
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+The authoritative schema and data come from the imported SIMDATUK SQL database. Laravel migration files in this repository are framework/package artifacts; they are **not** the schema source of truth.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+> **DO NOT RUN `php artisan migrate`, `migrate:fresh`, `db:wipe`, seeders, or any schema-rebuilding command against an imported SIMDATUK database.**
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Composer lifecycle scripts do not run migrations. Deployment automation must preserve this rule.
 
-## Learning Laravel
+## Required environment
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+Copy `.env.example` and configure deployment-specific values. At minimum verify:
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+- `APP_ENV=production`, `APP_DEBUG=false`, a stable `APP_KEY`, and the public HTTPS `APP_URL`;
+- `DB_CONNECTION=mysql` and the exact imported SIMDATUK database name/credentials;
+- the exact reverse-proxy IP addresses/CIDR ranges in `TRUSTED_PROXIES`, an ingress/network boundary that prevents clients from bypassing them, and `SANCTUM_STATEFUL_DOMAINS` when cookie authentication is used;
+- SMTP transport, sender identity, and synchronous mail delivery;
+- S3 bucket, region, endpoint/path-style mode, and application read/write/metadata permissions; list/delete should be granted only to an authorized smoke-test identity when required;
+- SIMSDM URL/client credentials and Google reCAPTCHA secret;
+- cache/session/queue choices. Initial parity defaults are file cache, file session, and synchronous queue.
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+Never commit `.env` or credentials.
 
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## Safe install and deployment
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+composer install --no-dev --classmap-authoritative --no-interaction --no-scripts
+php artisan package:discover --ansi
+php artisan config:clear
+php artisan route:clear
+php artisan view:clear
+php artisan event:clear
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+php artisan event:cache
+php artisan about --only=environment
+php artisan route:list --path=api
+php artisan schedule:list
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+No database migration or seeding command belongs in this sequence. Build frontend assets only if the deployment actually serves the optional Laravel/Vite scaffold.
 
-## Contributing
+Run the production scheduler every minute:
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```cron
+* * * * * cd /path/to/swp_simdatuk-13 && php artisan schedule:run >> /dev/null 2>&1
+```
 
-## Code of Conduct
+The active application mail flows are synchronous; no queue worker is required for parity while `QUEUE_CONNECTION=sync`.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## Writable paths
 
-## Security Vulnerabilities
+The web/PHP-FPM user needs write access to `storage/`, `bootstrap/cache/`, and the operating-system temporary directory used for XLSX/PDF/ZIP/template materialization. Use deployment owner/group permissions; do not make directories world-writable.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## Tests
 
-## License
+Default suite (clone-backed tests skip safely):
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```bash
+php artisan test --compact
+```
+
+Authorized clone verification requires both opt-in variables and the exact guarded clone name:
+
+```bash
+RUN_SIMDATUK_MYSQL_CLONE_TESTS=1 \
+SIMDATUK_CLONE_DATABASE=SWP_simdatuk_test13 \
+php artisan test --compact
+```
+
+Do not point the guarded suite at production.

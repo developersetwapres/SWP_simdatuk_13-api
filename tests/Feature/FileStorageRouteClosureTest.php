@@ -38,8 +38,8 @@ it('streams image PDF nested and encoded object paths from fake s3 without dispo
 it('returns 404 for a missing s3 object and rejects traversal-like paths', function () {
     Storage::fake('s3');
     $this->get('/api/image/phase24/missing.png')->assertNotFound();
-    expect($this->get('/api/image/../secret')->status())->toBe(500)
-        ->and($this->get('/api/image/%2e%2e%2fsecret')->status())->toBe(500);
+    expect($this->get('/api/image/../secret')->status())->toBe(404)
+        ->and($this->get('/api/image/%2e%2e%2fsecret')->status())->toBe(404);
 });
 
 it('characterizes encoded and duplicate separator behavior', function () {

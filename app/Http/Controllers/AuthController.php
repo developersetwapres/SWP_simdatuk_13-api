@@ -241,8 +241,8 @@ class AuthController extends Controller
 
     private function recaptchaValidation(mixed $token): JsonResponse
     {
-        $response = Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
-            'secret' => env('RECAPTCHA_SECRET_KEY'),
+        $response = Http::asForm()->post(config('services.recaptcha.verify_url'), [
+            'secret' => config('services.recaptcha.secret'),
             'response' => $token,
         ]);
 

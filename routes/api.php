@@ -269,6 +269,8 @@ Route::middleware(['auth:sanctum', 'role.access'])->group(function (): void {
 Route::get('/image/{path}', [EmployeeController::class, 'image'])->where('path', '.*');
 
 Route::get('/test-s3', function () {
+    abort_if(app()->isProduction(), 404);
+
     try {
         Storage::disk('s3')->files();
 

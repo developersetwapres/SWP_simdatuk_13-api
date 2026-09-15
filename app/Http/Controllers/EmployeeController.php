@@ -27,6 +27,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use League\Flysystem\PathTraversalDetected;
 
 class EmployeeController extends Controller
 {
@@ -1224,16 +1225,22 @@ class EmployeeController extends Controller
 
     public function image($path = null)
     {
-        abort_if(! $path || ! Storage::disk('s3')->exists($path), 404);
+        abort_if(! $path || in_array('..', preg_split('#/+#', rawurldecode($path)), true), 404);
 
-        $stream = Storage::disk('s3')->readStream($path);
-        abort_if(! $stream, 404);
+        try {
+            abort_if(! Storage::disk('s3')->exists($path), 404);
+            $stream = Storage::disk('s3')->readStream($path);
+            abort_if(! $stream, 404);
+            $mimeType = Storage::disk('s3')->mimeType($path);
+        } catch (PathTraversalDetected) {
+            abort(404);
+        }
 
         return response()->stream(function () use ($stream): void {
             fpassthru($stream);
             fclose($stream);
         }, 200, [
-            'Content-Type' => Storage::disk('s3')->mimeType($path),
+            'Content-Type' => $mimeType,
         ]);
     }
 }

@@ -157,17 +157,17 @@ class SynchronizationController extends Controller
      */
     private function getAccessToken()
     {
-        $response = Http::asForm()->post(env('SIMSDM_URL') . '/token', [
+        $response = Http::asForm()->post(config('services.simsdm.url') . '/token', [
             'grant_type' => 'client_credentials',
-            'client_id' => env('SIMSDM_CLIENT_ID'),
-            'client_secret' => env('SIMSDM_CLIENT_SECRET'),
+            'client_id' => config('services.simsdm.client_id'),
+            'client_secret' => config('services.simsdm.client_secret'),
         ]);
 
         if ($response->successful()) {
             $data = $response->json();
             $this->accessToken = $data['access_token'];
         } else {
-            Log::error('Failed to obtain access token', ['response' => $response->body()]);
+            Log::error('Failed to obtain access token', ['status' => $response->status()]);
         }
     }
 
@@ -178,7 +178,7 @@ class SynchronizationController extends Controller
      */
     private function getPegawai()
     {
-        $response = Http::withToken($this->accessToken)->get(env('SIMSDM_URL') . '/pegawai/v1/simdatuk/pegawaiAll');
+        $response = Http::withToken($this->accessToken)->get(config('services.simsdm.url') . '/pegawai/v1/simdatuk/pegawaiAll');
         if ($response->successful()) {
             $dataPegawai = $response->json();
             foreach ($dataPegawai['data'] as $item) {
@@ -229,14 +229,14 @@ class SynchronizationController extends Controller
                 }
             }
         } else {
-            Log::error('Failed to obtain access token', ['response' => $response->body()]);
+            Log::error('Failed to obtain access token', ['status' => $response->status()]);
         }
     }
 
     private function getPosition()
     {
 
-        $response = Http::withToken($this->accessToken)->get(env('SIMSDM_URL') . '/pegawai/v1/simdatuk/riwayatJabatan');
+        $response = Http::withToken($this->accessToken)->get(config('services.simsdm.url') . '/pegawai/v1/simdatuk/riwayatJabatan');
         if ($response->successful()) {
             $dataPegawai = $response->json();
             foreach ($dataPegawai['data'] as $item) {
@@ -285,13 +285,13 @@ class SynchronizationController extends Controller
                 }
             }
         } else {
-            Log::error('Failed to obtain access token', ['response' => $response->body()]);
+            Log::error('Failed to obtain access token', ['status' => $response->status()]);
         }
     }
 
     private function getGrade()
     {
-        $response = Http::withToken($this->accessToken)->get(env('SIMSDM_URL') . '/pegawai/v1/simdatuk/riwayatGolongan');
+        $response = Http::withToken($this->accessToken)->get(config('services.simsdm.url') . '/pegawai/v1/simdatuk/riwayatGolongan');
         if ($response->successful()) {
             $dataPegawai = $response->json();
             foreach ($dataPegawai['data'] as $item) {
@@ -338,13 +338,13 @@ class SynchronizationController extends Controller
                 }
             }
         } else {
-            Log::error('Failed to obtain access token', ['response' => $response->body()]);
+            Log::error('Failed to obtain access token', ['status' => $response->status()]);
         }
     }
 
     private function getEducation()
     {
-        $response = Http::withToken($this->accessToken)->get(env('SIMSDM_URL') . '/pegawai/v1/simdatuk/riwayatPendidikan');
+        $response = Http::withToken($this->accessToken)->get(config('services.simsdm.url') . '/pegawai/v1/simdatuk/riwayatPendidikan');
         if ($response->successful()) {
             $dataPegawai = $response->json();
             foreach ($dataPegawai['data'] as $item) {
@@ -379,14 +379,14 @@ class SynchronizationController extends Controller
                 }
             }
         } else {
-            Log::error('Failed to obtain access token', ['response' => $response->body()]);
+            Log::error('Failed to obtain access token', ['status' => $response->status()]);
         }
     }
 
     private function getFamily()
     {
         // Suami Istri
-        $response = Http::withToken($this->accessToken)->get(env('SIMSDM_URL') . '/pegawai/v1/simdatuk/riwayatIstriSuami');
+        $response = Http::withToken($this->accessToken)->get(config('services.simsdm.url') . '/pegawai/v1/simdatuk/riwayatIstriSuami');
         if ($response->successful()) {
             $dataPegawai = $response->json();
             foreach ($dataPegawai['data'] as $item) {
@@ -425,10 +425,10 @@ class SynchronizationController extends Controller
                 }
             }
         } else {
-            Log::error('Failed to obtain access token', ['response' => $response->body()]);
+            Log::error('Failed to obtain access token', ['status' => $response->status()]);
         }
 
-        $response = Http::withToken($this->accessToken)->get(env('SIMSDM_URL') . '/pegawai/v1/simdatuk/riwayatAnak');
+        $response = Http::withToken($this->accessToken)->get(config('services.simsdm.url') . '/pegawai/v1/simdatuk/riwayatAnak');
         if ($response->successful()) {
             $dataPegawai = $response->json();
             foreach ($dataPegawai['data'] as $item) {
@@ -473,13 +473,13 @@ class SynchronizationController extends Controller
                 }
             }
         } else {
-            Log::error('Failed to obtain access token', ['response' => $response->body()]);
+            Log::error('Failed to obtain access token', ['status' => $response->status()]);
         }
     }
 
     private function getTraining()
     {
-        $response = Http::withToken($this->accessToken)->get(env('SIMSDM_URL') . '/pegawai/v1/simdatuk/riwayatDiklatTeknis');
+        $response = Http::withToken($this->accessToken)->get(config('services.simsdm.url') . '/pegawai/v1/simdatuk/riwayatDiklatTeknis');
         if ($response->successful()) {
             $dataPegawai = $response->json();
             foreach ($dataPegawai['data'] as $item) {
@@ -533,10 +533,10 @@ class SynchronizationController extends Controller
                 }
             }
         } else {
-            Log::error('Failed to obtain access token', ['response' => $response->body()]);
+            Log::error('Failed to obtain access token', ['status' => $response->status()]);
         }
 
-        // $response = Http::withToken($this->accessToken)->get(env('SIMSDM_URL') . '/pegawai/v1/simdatuk/riwayatDiklat');
+        // $response = Http::withToken($this->accessToken)->get(config('services.simsdm.url') . '/pegawai/v1/simdatuk/riwayatDiklat');
         // if ($response->successful()) {
         //     $dataPegawai = $response->json();
         //     foreach ($dataPegawai['data'] as $item) {
@@ -591,7 +591,7 @@ class SynchronizationController extends Controller
         //         }
         //     }
         // } else {
-        //     \Log::error('Failed to obtain access token', ['response' => $response->body()]);
+        //     \Log::error('Failed to obtain access token', ['status' => $response->status()]);
         // }
     }
 }

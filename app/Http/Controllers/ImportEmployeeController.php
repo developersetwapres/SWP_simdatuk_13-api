@@ -1087,6 +1087,7 @@ class ImportEmployeeController extends Controller
             $whereClause = '';
             $conditionCount = 0;
             $primaryKeyValues = [];
+            $bindings = [];
 
             foreach ($primaryKeyParts as $field => $value) {
                 // Build WHERE clause for SQL query
@@ -1096,7 +1097,8 @@ class ImportEmployeeController extends Controller
 
                 $value = str_replace(' ', '', strtolower($value));
                 $primaryKeyValues[] = $value;
-                $whereClause .= "LOWER(REPLACE(" . $field . ",' ','')) = '" . $value . "'";
+                $bindings[] = $value;
+                $whereClause .= "LOWER(REPLACE(`" . $field . "`,' ','')) = ?";
                 $conditionCount++;
             }
 
@@ -1106,7 +1108,7 @@ class ImportEmployeeController extends Controller
 
             if ($historyId === false) {
                 // Query the database for existing history record
-                $historyRecord = DB::select("SELECT id FROM `" . $tableName . "` WHERE " . $whereClause);
+                $historyRecord = DB::select("SELECT id FROM `" . $tableName . "` WHERE " . $whereClause, $bindings);
                 $historyId = (count($historyRecord) > 0) ? $historyRecord[0]->id : null;
 
                 if (is_null($historyId)) {
