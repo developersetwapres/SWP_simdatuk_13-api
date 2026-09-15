@@ -26,6 +26,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class EmployeeController extends Controller
 {
@@ -1219,5 +1220,20 @@ class EmployeeController extends Controller
             Log::warning($th);
             return $this->response(400, 'Mohon maaf, fitur dalam kendala harap hubungi Tim IT!');
         }
+    }
+
+    public function image($path = null)
+    {
+        abort_if(! $path || ! Storage::disk('s3')->exists($path), 404);
+
+        $stream = Storage::disk('s3')->readStream($path);
+        abort_if(! $stream, 404);
+
+        return response()->stream(function () use ($stream): void {
+            fpassthru($stream);
+            fclose($stream);
+        }, 200, [
+            'Content-Type' => Storage::disk('s3')->mimeType($path),
+        ]);
     }
 }

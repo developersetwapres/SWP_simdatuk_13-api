@@ -15,6 +15,7 @@ use App\Http\Controllers\ExportRecapitulationController;
 use App\Http\Controllers\GradeController;
 use App\Http\Controllers\GradeHistoryController;
 use App\Http\Controllers\GroupController;
+use App\Http\Controllers\ImportEmployeeController;
 use App\Http\Controllers\InstitutionController;
 use App\Http\Controllers\NoteController;
 use App\Http\Controllers\PerformanceHistoryController;
@@ -38,6 +39,11 @@ use App\Http\Controllers\TargetHistoryController;
 use App\Http\Controllers\TrainingHistoryController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
+
+Route::get('/', function () {
+    return 'api enabled!';
+});
 
 Route::middleware(['api.rate.limit:5,1'])->group(function (): void {
     Route::post('login', [AuthController::class, 'login']);
@@ -96,6 +102,7 @@ Route::middleware(['auth:sanctum', 'role.access'])->group(function (): void {
         Route::get('/detail', [PromotionController::class, 'show']);
     });
 
+    Route::post('employees/import', [ImportEmployeeController::class, 'import']);
     Route::get('employees', [EmployeeController::class, 'index']);
     Route::post('employees', [EmployeeController::class, 'create']);
     Route::get('employees/synchronization', [SynchronizationController::class, 'index']);
@@ -103,6 +110,9 @@ Route::middleware(['auth:sanctum', 'role.access'])->group(function (): void {
     Route::post('employees/{id}', [EmployeeController::class, 'update']);
     Route::delete('employees/{id}', [EmployeeController::class, 'delete']);
     Route::put('employees/status', [EmployeeController::class, 'status']);
+    Route::get('employees/import/download-template/{type}', [ImportEmployeeController::class, 'downloadTemplate']);
+    Route::get('employees/import/histories', [ImportEmployeeController::class, 'getRiwayatImport']);
+    Route::get('employees/import/download-failed-import/{id}', [ImportEmployeeController::class, 'downloadImportErrorLog']);
 
     Route::prefix('position-histories')->group(function (): void {
         Route::get('/', [PositionHistoryController::class, 'index']);
@@ -254,4 +264,22 @@ Route::middleware(['auth:sanctum', 'role.access'])->group(function (): void {
         Route::post('/employees-drh', [ExportController::class, 'zipDetailEmployee']);
         Route::post('/preview', [ExportController::class, 'exportExcelsPreview']);
     });
+});
+
+Route::get('/image/{path}', [EmployeeController::class, 'image'])->where('path', '.*');
+
+Route::get('/test-s3', function () {
+    try {
+        Storage::disk('s3')->files();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'S3 connected',
+        ]);
+    } catch (\Throwable $e) {
+        return response()->json([
+            'status' => false,
+            'message' => $e->getMessage(),
+        ], 500);
+    }
 });

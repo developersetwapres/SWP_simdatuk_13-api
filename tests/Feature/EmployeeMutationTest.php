@@ -195,6 +195,7 @@ it('registers the active Employee mutation routes in Laravel 10 declaration orde
     $routes = collect(Route::getRoutes()->getRoutes())
         ->filter(fn ($route): bool => str_starts_with($route->uri(), 'api/employees'))
         ->reject(fn ($route): bool => $route->uri() === 'api/employees/synchronization')
+        ->filter(fn ($route): bool => str_starts_with($route->getActionName(), 'App\\Http\\Controllers\\EmployeeController@'))
         ->map(fn ($route): array => [$route->methods()[0], $route->uri(), $route->getActionName(), $route->middleware()])
         ->values()->all();
 

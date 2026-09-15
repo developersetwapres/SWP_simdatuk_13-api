@@ -119,6 +119,7 @@ it('registers synchronization before the Employee wildcard and preserves the com
         ->values()->all();
 
     expect($routes)->toBe([
+        ['POST', 'api/employees/import', 'App\\Http\\Controllers\\ImportEmployeeController@import', ['api', 'auth:sanctum', 'role.access']],
         ['GET', 'api/employees', 'App\\Http\\Controllers\\EmployeeController@index', ['api', 'auth:sanctum', 'role.access']],
         ['POST', 'api/employees', 'App\\Http\\Controllers\\EmployeeController@create', ['api', 'auth:sanctum', 'role.access']],
         ['GET', 'api/employees/synchronization', 'App\\Http\\Controllers\\SynchronizationController@index', ['api', 'auth:sanctum', 'role.access']],
@@ -126,6 +127,9 @@ it('registers synchronization before the Employee wildcard and preserves the com
         ['POST', 'api/employees/{id}', 'App\\Http\\Controllers\\EmployeeController@update', ['api', 'auth:sanctum', 'role.access']],
         ['DELETE', 'api/employees/{id}', 'App\\Http\\Controllers\\EmployeeController@delete', ['api', 'auth:sanctum', 'role.access']],
         ['PUT', 'api/employees/status', 'App\\Http\\Controllers\\EmployeeController@status', ['api', 'auth:sanctum', 'role.access']],
+        ['GET', 'api/employees/import/download-template/{type}', 'App\\Http\\Controllers\\ImportEmployeeController@downloadTemplate', ['api', 'auth:sanctum', 'role.access']],
+        ['GET', 'api/employees/import/histories', 'App\\Http\\Controllers\\ImportEmployeeController@getRiwayatImport', ['api', 'auth:sanctum', 'role.access']],
+        ['GET', 'api/employees/import/download-failed-import/{id}', 'App\\Http\\Controllers\\ImportEmployeeController@downloadImportErrorLog', ['api', 'auth:sanctum', 'role.access']],
     ]);
 });
 
