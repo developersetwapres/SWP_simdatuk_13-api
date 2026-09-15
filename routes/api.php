@@ -7,10 +7,12 @@ use App\Http\Controllers\EchelonController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\EmploymentTypeController;
 use App\Http\Controllers\GradeController;
+use App\Http\Controllers\GradeHistoryController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\InstitutionController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\PositionController;
+use App\Http\Controllers\PositionHistoryController;
 use App\Http\Controllers\RecognitionController;
 use App\Http\Controllers\ResidenceController;
 use App\Http\Controllers\RoleController;
@@ -30,6 +32,22 @@ Route::middleware(['auth:sanctum', 'role.access'])->group(function (): void {
     Route::get('active-sessions', [AuthController::class, 'getActiveSessions']);
 
     Route::get('employees', [EmployeeController::class, 'index']);
+
+    Route::prefix('position-histories')->group(function (): void {
+        Route::get('/', [PositionHistoryController::class, 'index']);
+        Route::post('/', [PositionHistoryController::class, 'create']);
+        Route::get('/{id}', [PositionHistoryController::class, 'show']);
+        Route::post('/{id}', [PositionHistoryController::class, 'update']);
+        Route::delete('/{id}', [PositionHistoryController::class, 'delete']);
+    });
+
+    Route::prefix('grade-histories')->group(function (): void {
+        Route::get('/', [GradeHistoryController::class, 'index']);
+        Route::post('/', [GradeHistoryController::class, 'create']);
+        Route::get('/{id}', [GradeHistoryController::class, 'show']);
+        Route::post('/{id}', [GradeHistoryController::class, 'update']);
+        Route::delete('/{id}', [GradeHistoryController::class, 'delete']);
+    });
 
     Route::prefix('positions')->group(function (): void {
         Route::get('/', [PositionController::class, 'index']);
