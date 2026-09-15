@@ -12,6 +12,8 @@ use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\PositionController;
 use App\Http\Controllers\RecognitionController;
 use App\Http\Controllers\ResidenceController;
+use App\Http\Controllers\RoleController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['api.rate.limit:5,1'])->group(function (): void {
@@ -81,5 +83,21 @@ Route::middleware(['auth:sanctum', 'role.access'])->group(function (): void {
 
     Route::prefix('permissions')->group(function (): void {
         Route::get('/', [PermissionController::class, 'index']);
+    });
+
+    Route::prefix('roles')->group(function (): void {
+        Route::get('/', [RoleController::class, 'index']);
+        Route::post('/', [RoleController::class, 'create']);
+        Route::get('/{id}', [RoleController::class, 'show']);
+        Route::post('/{id}', [RoleController::class, 'update']);
+        Route::delete('/{id}', [RoleController::class, 'delete']);
+    });
+
+    Route::prefix('users')->group(function (): void {
+        Route::get('/', [UserController::class, 'index']);
+        Route::post('/', [UserController::class, 'create']);
+        Route::get('/{id}', [UserController::class, 'show']);
+        Route::post('/{id}', [UserController::class, 'update']);
+        Route::put('/status', [UserController::class, 'status']);
     });
 });
