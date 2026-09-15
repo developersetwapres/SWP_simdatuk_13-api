@@ -152,7 +152,7 @@ function phaseTwelveExpectedPositionMerged(object $user): string
 
 it('preserves the Employee index route while its core detail repository remains available', function () {
     $employeeRoutes = collect(Route::getRoutes()->getRoutes())
-        ->filter(fn ($route): bool => $route->uri() === 'api/employees')
+        ->filter(fn ($route): bool => $route->uri() === 'api/employees' && in_array('GET', $route->methods(), true))
         ->map(fn ($route): array => [$route->methods()[0], $route->uri(), $route->getActionName()])
         ->values()
         ->all();

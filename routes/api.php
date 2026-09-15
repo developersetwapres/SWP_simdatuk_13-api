@@ -20,6 +20,7 @@ use App\Http\Controllers\RecognitionController;
 use App\Http\Controllers\RecognitionHistoryController;
 use App\Http\Controllers\ResidenceController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\SynchronizationController;
 use App\Http\Controllers\TargetHistoryController;
 use App\Http\Controllers\TrainingHistoryController;
 use App\Http\Controllers\UserController;
@@ -43,7 +44,12 @@ Route::middleware(['auth:sanctum', 'role.access'])->group(function (): void {
     });
 
     Route::get('employees', [EmployeeController::class, 'index']);
+    Route::post('employees', [EmployeeController::class, 'create']);
+    Route::get('employees/synchronization', [SynchronizationController::class, 'index']);
     Route::get('employees/{id}', [EmployeeController::class, 'show']);
+    Route::post('employees/{id}', [EmployeeController::class, 'update']);
+    Route::delete('employees/{id}', [EmployeeController::class, 'delete']);
+    Route::put('employees/status', [EmployeeController::class, 'status']);
 
     Route::prefix('position-histories')->group(function (): void {
         Route::get('/', [PositionHistoryController::class, 'index']);

@@ -129,9 +129,9 @@ function phaseEighteenExpectedAggregate(int $userId, object $employee): array
     ];
 }
 
-it('registers only Employee read routes in Laravel 10 relative order', function () {
+it('preserves Employee read routes in Laravel 10 relative order', function () {
     $routes = collect(Route::getRoutes()->getRoutes())
-        ->filter(fn ($route): bool => str_starts_with($route->uri(), 'api/employees'))
+        ->filter(fn ($route): bool => in_array($route->uri(), ['api/employees', 'api/employees/{id}'], true) && in_array('GET', $route->methods(), true))
         ->map(fn ($route): array => [$route->methods()[0], $route->uri(), $route->getActionName(), $route->middleware()])
         ->values()
         ->all();
