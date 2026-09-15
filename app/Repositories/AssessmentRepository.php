@@ -31,4 +31,27 @@ class AssessmentRepository
 
         return $assessments;
     }
+    public function getDetailBulkUser($usersID)
+    {
+        $assessements = DB::table('user_assessments');
+        $assessements->whereIn('user_id', $usersID);
+        $assessements->select(
+            'id',
+            'user_id',
+            DB::raw("DATE_FORMAT(event_date, '%d-%m-%Y') as event_date"),
+            'point',
+            'organizer',
+            'assessment_document'
+        );
+        $assessements->orderBy('event_date', 'desc');
+        $assessements = $assessements->get();
+
+        $newAssessment = [];
+        foreach ($assessements as $assessment) {
+            $assessment->assessment_document = $this->getDocument($assessment->assessment_document);
+            $newAssessment[$assessment->user_id][] = $assessment;
+        }
+
+        return $newAssessment;
+    }
 }

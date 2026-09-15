@@ -60,4 +60,36 @@ class LeaveRepository
 
         return implode(', ', array_column($position, 'name'));
     }
+    public function getDetailBulkUser($usersID)
+    {
+        $leaves = DB::table('user_leaves');
+        $leaves->whereIn('user_id', $usersID);
+        $leaves->leftJoin('users as u', 'user_leaves.user_id', '=', 'u.id');
+        $leaves->leftJoin('grades as g', 'u.grade_id', '=', 'g.id');
+        $leaves->select(
+            'user_leaves.id',
+            'user_leaves.user_id',
+            DB::raw("CONCAT(g.name,' ',g.code) as grade"),
+            'u.position_id',
+            DB::raw("DATE_FORMAT(start_date, '%d-%m-%Y') as start_date"),
+            DB::raw("DATE_FORMAT(end_date, '%d-%m-%Y') as end_date"),
+            'user_leaves.type',
+            'user_leaves.number',
+            'user_leaves.description',
+            'user_leaves.letter',
+        );
+        $leaves->orderBy('start_date', 'desc');
+        $leaves = $leaves->get();
+
+        $newLeaves = [];
+        foreach ($leaves as $key => $leave) {
+            $leave->letter = $this->getDocument($leave->letter);
+            if (isset($leave->position_id)) {
+                $leave->position_merged = $this->getRecursivePosition($leave->position_id);
+            }
+            $newLeaves[$leave->user_id][] = $leave;
+        }
+
+        return $newLeaves;
+    }
 }

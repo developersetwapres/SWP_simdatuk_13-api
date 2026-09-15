@@ -1,12 +1,17 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ComparisonController;
 use App\Http\Controllers\DecreeController;
+use App\Http\Controllers\DiagramController;
 use App\Http\Controllers\DisciplinaryController;
 use App\Http\Controllers\DisciplinaryHistoryController;
 use App\Http\Controllers\EchelonController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\EmploymentTypeController;
+use App\Http\Controllers\ExportComparisonController;
+use App\Http\Controllers\ExportController;
+use App\Http\Controllers\ExportRecapitulationController;
 use App\Http\Controllers\GradeController;
 use App\Http\Controllers\GradeHistoryController;
 use App\Http\Controllers\GroupController;
@@ -16,11 +21,19 @@ use App\Http\Controllers\PerformanceHistoryController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\PositionController;
 use App\Http\Controllers\PositionHistoryController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PromotionController;
+use App\Http\Controllers\RecapitulationAsnController;
+use App\Http\Controllers\RecapitulationController;
+use App\Http\Controllers\RecapitulationEmployeeController;
+use App\Http\Controllers\RecapitulationNonAsnController;
+use App\Http\Controllers\RecapitulationOutsourceController;
 use App\Http\Controllers\RecognitionController;
 use App\Http\Controllers\RecognitionHistoryController;
 use App\Http\Controllers\ResidenceController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SynchronizationController;
+use App\Http\Controllers\SummaryController;
 use App\Http\Controllers\TargetHistoryController;
 use App\Http\Controllers\TrainingHistoryController;
 use App\Http\Controllers\UserController;
@@ -38,9 +51,49 @@ Route::middleware(['auth:sanctum', 'role.access'])->group(function (): void {
     Route::delete('logout-all-devices', [AuthController::class, 'logoutAllDevices']);
     Route::get('active-sessions', [AuthController::class, 'getActiveSessions']);
 
+    Route::prefix('summaries')->group(function (): void {
+        Route::get('/', [SummaryController::class, 'index']);
+    });
+
+    Route::prefix('recapitulations')->group(function (): void {
+        Route::get('/', [RecapitulationController::class, 'index']);
+        Route::get('/{category}', [RecapitulationController::class, 'show']);
+    });
+
+    Route::prefix('recapitulations-asn')->group(function (): void {
+        Route::get('/', [RecapitulationAsnController::class, 'index']);
+        Route::get('/{category}', [RecapitulationAsnController::class, 'show']);
+    });
+
+    Route::prefix('recapitulations-nonasn')->group(function (): void {
+        Route::get('/', [RecapitulationNonAsnController::class, 'index']);
+    });
+
+    Route::prefix('recapitulations-outsource')->group(function (): void {
+        Route::get('/', [RecapitulationOutsourceController::class, 'index']);
+    });
+
+    Route::get('recapitulations-employee', [RecapitulationEmployeeController::class, 'index']);
+
+    Route::prefix('diagrams')->group(function (): void {
+        Route::get('/', [DiagramController::class, 'index']);
+        Route::get('/export', [DiagramController::class, 'export']);
+    });
+
+    Route::prefix('comparisons')->group(function (): void {
+        Route::get('/', [ComparisonController::class, 'index']);
+        Route::get('/detail', [ComparisonController::class, 'comparison']);
+        Route::get('/detail-promotions', [ComparisonController::class, 'comparisonPromotion']);
+    });
+
     Route::prefix('notes')->group(function (): void {
         Route::get('/{userid}', [NoteController::class, 'show']);
         Route::post('/{userid}', [NoteController::class, 'update']);
+    });
+
+    Route::prefix('promotions')->group(function (): void {
+        Route::get('/', [PromotionController::class, 'index']);
+        Route::get('/detail', [PromotionController::class, 'show']);
     });
 
     Route::get('employees', [EmployeeController::class, 'index']);
@@ -184,5 +237,21 @@ Route::middleware(['auth:sanctum', 'role.access'])->group(function (): void {
         Route::get('/{id}', [UserController::class, 'show']);
         Route::post('/{id}', [UserController::class, 'update']);
         Route::put('/status', [UserController::class, 'status']);
+    });
+
+    Route::prefix('profile')->group(function (): void {
+        Route::get('/', [ProfileController::class, 'show']);
+        Route::post('/', [ProfileController::class, 'update']);
+    });
+
+    Route::prefix('export')->group(function (): void {
+        Route::get('/study-programs', [ExportController::class, 'studyPrograms']);
+        Route::get('/recapitulations/{type}', [ExportRecapitulationController::class, 'recapitulation']);
+        Route::post('/comparisons', [ExportComparisonController::class, 'comparison']);
+        Route::post('/comparison-promotions', [ExportComparisonController::class, 'comparisonPromotion']);
+        Route::post('/employees/{type}', [ExportController::class, 'employees']);
+        Route::post('/employees-drh/{id}', [ExportController::class, 'detailEmployee']);
+        Route::post('/employees-drh', [ExportController::class, 'zipDetailEmployee']);
+        Route::post('/preview', [ExportController::class, 'exportExcelsPreview']);
     });
 });

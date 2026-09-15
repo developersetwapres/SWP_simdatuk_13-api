@@ -31,4 +31,26 @@ class TalentRepository
 
         return $talents;
     }
+    public function getDetailBulkUser($usersID)
+    {
+        $talents = DB::table('user_talents');
+        $talents->whereIn('user_id', $usersID);
+        $talents->select(
+            'id',
+            'user_id',
+            DB::raw("DATE_FORMAT(event_date, '%d-%m-%Y') as event_date"),
+            'point',
+            'organizer',
+            'talent_document'
+        );
+        $talents->orderBy('event_date', 'desc');
+        $talents = $talents->get();
+
+        $newTalents = [];
+        foreach ($talents as $talent) {
+            $talent->talent_document = $this->getDocument($talent->talent_document);
+            $newTalents[$talent->user_id][] = $talent;
+        }
+        return $newTalents;
+    }
 }

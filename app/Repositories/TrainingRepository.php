@@ -43,4 +43,39 @@ class TrainingRepository
 
         return $trainings;
     }
+    public function getDetailBulkUser($usersID, $type)
+    {
+        $trainings = DB::table('training_histories as th');
+        $trainings->join('training_history_users as thu', 'th.id', '=', 'thu.training_history_id');
+        $trainings->leftJoin('training_levels as tl', 'th.level', '=', 'tl.id');
+        $trainings->whereIn('thu.user_id', $usersID);
+        $trainings->where('th.type', 31);
+        $trainings->select(
+            'thu.id',
+            'thu.user_id',
+            'th.period_month',
+            'th.period_year',
+            'th.name',
+            DB::raw('tl.level_name as level'),
+            DB::raw("DATE_FORMAT(th.start_date, '%d-%m-%Y') as start_date"),
+            DB::raw("DATE_FORMAT(th.end_date, '%d-%m-%Y') as end_date"),
+            'th.duration',
+            'th.organizer',
+            'th.reference_number',
+            'th.link',
+            'thu.certificate',
+            'th.type',
+            'th.description',
+        );
+        $trainings->orderBy('th.start_date', 'desc');
+        $trainings = $trainings->get();
+
+        $newTrainings = [];
+        foreach ($trainings as $training) {
+            $training->certificate = $this->getDocument($training->certificate);
+            $newTrainings[$training->user_id][] = $training;
+        }
+
+        return $newTrainings;
+    }
 }
