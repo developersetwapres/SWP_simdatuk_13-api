@@ -14,8 +14,10 @@ use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\PositionController;
 use App\Http\Controllers\PositionHistoryController;
 use App\Http\Controllers\RecognitionController;
+use App\Http\Controllers\RecognitionHistoryController;
 use App\Http\Controllers\ResidenceController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\TrainingHistoryController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -47,6 +49,28 @@ Route::middleware(['auth:sanctum', 'role.access'])->group(function (): void {
         Route::get('/{id}', [GradeHistoryController::class, 'show']);
         Route::post('/{id}', [GradeHistoryController::class, 'update']);
         Route::delete('/{id}', [GradeHistoryController::class, 'delete']);
+    });
+
+    Route::prefix('training-histories')->group(function (): void {
+        Route::get('/', [TrainingHistoryController::class, 'index']);
+        Route::get('/groups', [TrainingHistoryController::class, 'technicalGroups']);
+        Route::post('/', [TrainingHistoryController::class, 'create']);
+        Route::get('/{id}', [TrainingHistoryController::class, 'show']);
+        Route::post('/{id}', [TrainingHistoryController::class, 'update']);
+        Route::delete('/{id}', [TrainingHistoryController::class, 'delete']);
+
+        Route::prefix('levels')->group(function (): void {
+            Route::get('/structural', [TrainingHistoryController::class, 'structuralLevels']);
+            Route::get('/functional', [TrainingHistoryController::class, 'functionalLevels']);
+        });
+    });
+
+    Route::prefix('recognition-histories')->group(function (): void {
+        Route::get('/', [RecognitionHistoryController::class, 'index']);
+        Route::post('/', [RecognitionHistoryController::class, 'create']);
+        Route::get('/{id}', [RecognitionHistoryController::class, 'show']);
+        Route::post('/{id}', [RecognitionHistoryController::class, 'update']);
+        Route::delete('/{id}', [RecognitionHistoryController::class, 'delete']);
     });
 
     Route::prefix('positions')->group(function (): void {
