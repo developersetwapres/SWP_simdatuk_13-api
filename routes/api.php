@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DecreeController;
 use App\Http\Controllers\DisciplinaryController;
+use App\Http\Controllers\DisciplinaryHistoryController;
 use App\Http\Controllers\EchelonController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\EmploymentTypeController;
@@ -10,6 +11,8 @@ use App\Http\Controllers\GradeController;
 use App\Http\Controllers\GradeHistoryController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\InstitutionController;
+use App\Http\Controllers\NoteController;
+use App\Http\Controllers\PerformanceHistoryController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\PositionController;
 use App\Http\Controllers\PositionHistoryController;
@@ -17,6 +20,7 @@ use App\Http\Controllers\RecognitionController;
 use App\Http\Controllers\RecognitionHistoryController;
 use App\Http\Controllers\ResidenceController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\TargetHistoryController;
 use App\Http\Controllers\TrainingHistoryController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -32,6 +36,11 @@ Route::middleware(['auth:sanctum', 'role.access'])->group(function (): void {
     Route::delete('logout', [AuthController::class, 'logout']);
     Route::delete('logout-all-devices', [AuthController::class, 'logoutAllDevices']);
     Route::get('active-sessions', [AuthController::class, 'getActiveSessions']);
+
+    Route::prefix('notes')->group(function (): void {
+        Route::get('/{userid}', [NoteController::class, 'show']);
+        Route::post('/{userid}', [NoteController::class, 'update']);
+    });
 
     Route::get('employees', [EmployeeController::class, 'index']);
 
@@ -71,6 +80,30 @@ Route::middleware(['auth:sanctum', 'role.access'])->group(function (): void {
         Route::get('/{id}', [RecognitionHistoryController::class, 'show']);
         Route::post('/{id}', [RecognitionHistoryController::class, 'update']);
         Route::delete('/{id}', [RecognitionHistoryController::class, 'delete']);
+    });
+
+    Route::prefix('target-histories')->group(function (): void {
+        Route::get('/', [TargetHistoryController::class, 'index']);
+        Route::post('/', [TargetHistoryController::class, 'create']);
+        Route::get('/{id}', [TargetHistoryController::class, 'show']);
+        Route::post('/{id}', [TargetHistoryController::class, 'update']);
+        Route::delete('/{id}', [TargetHistoryController::class, 'delete']);
+    });
+
+    Route::prefix('performance-histories')->group(function (): void {
+        Route::get('/', [PerformanceHistoryController::class, 'index']);
+        Route::post('/', [PerformanceHistoryController::class, 'create']);
+        Route::get('/{id}', [PerformanceHistoryController::class, 'show']);
+        Route::post('/{id}', [PerformanceHistoryController::class, 'update']);
+        Route::delete('/{id}', [PerformanceHistoryController::class, 'delete']);
+    });
+
+    Route::prefix('disciplinary-histories')->group(function (): void {
+        Route::get('/', [DisciplinaryHistoryController::class, 'index']);
+        Route::post('/', [DisciplinaryHistoryController::class, 'create']);
+        Route::get('/{id}', [DisciplinaryHistoryController::class, 'show']);
+        Route::post('/{id}', [DisciplinaryHistoryController::class, 'update']);
+        Route::delete('/{id}', [DisciplinaryHistoryController::class, 'delete']);
     });
 
     Route::prefix('positions')->group(function (): void {
