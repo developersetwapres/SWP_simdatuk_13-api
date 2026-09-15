@@ -9,6 +9,7 @@ use App\Http\Controllers\GradeController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\InstitutionController;
 use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\PositionController;
 use App\Http\Controllers\RecognitionController;
 use App\Http\Controllers\ResidenceController;
 use Illuminate\Support\Facades\Route;
@@ -24,6 +25,15 @@ Route::middleware(['auth:sanctum', 'role.access'])->group(function (): void {
     Route::delete('logout', [AuthController::class, 'logout']);
     Route::delete('logout-all-devices', [AuthController::class, 'logoutAllDevices']);
     Route::get('active-sessions', [AuthController::class, 'getActiveSessions']);
+
+    Route::prefix('positions')->group(function (): void {
+        Route::get('/', [PositionController::class, 'index']);
+        Route::post('/', [PositionController::class, 'create']);
+        Route::get('/available-order', [PositionController::class, 'availableOrder']);
+        Route::get('/{id}', [PositionController::class, 'show']);
+        Route::post('/{id}', [PositionController::class, 'update']);
+        Route::delete('/{id}', [PositionController::class, 'delete']);
+    });
 
     Route::prefix('grades')->group(function (): void {
         Route::get('/', [GradeController::class, 'index']);
