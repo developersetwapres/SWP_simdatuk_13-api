@@ -87,7 +87,7 @@ function phaseSeventeenFixtureUser(): int
     ]);
 }
 
-it('registers only the active Note API and keeps other ancillary and Employee detail routes absent', function () {
+it('registers only the active Note API and keeps other ancillary routes absent', function () {
     $routes = collect(Route::getRoutes()->getRoutes());
     $noteRoutes = $routes->filter(fn ($route): bool => str_starts_with($route->uri(), 'api/notes'))->map(fn ($route): array => [
         $route->methods()[0], $route->uri(), $route->getActionName(), $route->middleware(),
@@ -100,7 +100,6 @@ it('registers only the active Note API and keeps other ancillary and Employee de
     foreach (['leaves', 'credits', 'assessments', 'competencies', 'talents'] as $path) {
         expect($routes->contains(fn ($route): bool => str_starts_with($route->uri(), 'api/'.$path)))->toBeFalse();
     }
-    expect($routes->contains(fn ($route): bool => $route->uri() === 'api/employees/{id}'))->toBeFalse();
 });
 
 it('keeps the Phase 5 Note and Credit repositories source-equivalent', function () {

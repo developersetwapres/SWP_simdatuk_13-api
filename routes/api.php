@@ -43,6 +43,7 @@ Route::middleware(['auth:sanctum', 'role.access'])->group(function (): void {
     });
 
     Route::get('employees', [EmployeeController::class, 'index']);
+    Route::get('employees/{id}', [EmployeeController::class, 'show']);
 
     Route::prefix('position-histories')->group(function (): void {
         Route::get('/', [PositionHistoryController::class, 'index']);

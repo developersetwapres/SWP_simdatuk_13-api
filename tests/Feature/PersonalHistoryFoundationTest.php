@@ -11,12 +11,11 @@ function phaseFourteenConnection(): Connection
     return DB::connection('mysql');
 }
 
-it('does not invent Education or Family routes and keeps Employee detail disabled', function () {
+it('does not invent Education or Family routes', function () {
     $uris = collect(Route::getRoutes()->getRoutes())->pluck('uri');
 
     expect($uris->contains(fn (string $uri): bool => str_contains($uri, 'education')))->toBeFalse()
-        ->and($uris->contains(fn (string $uri): bool => str_contains($uri, 'famil')))->toBeFalse()
-        ->and($uris->contains('api/employees/{id}'))->toBeFalse();
+        ->and($uris->contains(fn (string $uri): bool => str_contains($uri, 'famil')))->toBeFalse();
 });
 
 describe('Education and Family repositories on the guarded MySQL clone', function () {

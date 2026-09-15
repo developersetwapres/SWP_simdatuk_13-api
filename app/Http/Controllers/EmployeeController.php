@@ -2,13 +2,47 @@
 
 namespace App\Http\Controllers;
 
+use App\Repositories\AssessmentRepository;
+use App\Repositories\CompetencyRepository;
+use App\Repositories\CreditRepository;
+use App\Repositories\DisciplinaryRepository;
+use App\Repositories\EducationRepository;
+use App\Repositories\EmployeeRepository;
+use App\Repositories\FamilyRepository;
+use App\Repositories\GradeRepository;
+use App\Repositories\LeaveRepository;
+use App\Repositories\NoteRepository;
+use App\Repositories\PerformanceRepository;
+use App\Repositories\PositionRepository;
+use App\Repositories\RecognitionRepository;
+use App\Repositories\TalentRepository;
+use App\Repositories\TargetRepository;
+use App\Repositories\TrainingRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class EmployeeController extends Controller
 {
-    public function __construct(protected Request $request) {}
+    public function __construct(
+        protected Request $request,
+        protected EmployeeRepository $employeeRepository,
+        protected EducationRepository $educationRepository,
+        protected FamilyRepository $familyRepository,
+        protected PositionRepository $positionRepository,
+        protected GradeRepository $gradeRepository,
+        protected TrainingRepository $trainingRepository,
+        protected RecognitionRepository $recognitionRepository,
+        protected TargetRepository $targetRepository,
+        protected PerformanceRepository $performanceRepository,
+        protected DisciplinaryRepository $disciplinaryRepository,
+        protected LeaveRepository $leaveRepository,
+        protected NoteRepository $noteRepository,
+        protected CreditRepository $creditRepository,
+        protected AssessmentRepository $assessmentRepository,
+        protected CompetencyRepository $competencyRepository,
+        protected TalentRepository $talentRepository,
+    ) {}
 
     public function index(): JsonResponse
     {
@@ -129,5 +163,54 @@ class EmployeeController extends Controller
         }
 
         return $this->paginateResponse(200, $message, $users);
+    }
+
+    public function show(): JsonResponse
+    {
+        $employee = $this->employeeRepository->getDetail($this->request->id);
+
+        if (! $employee) {
+            return $this->response(404, 'Pegawai tidak ditemukan.');
+        }
+
+        $educations = $this->educationRepository->getDetail($this->request->id);
+        $families = $this->familyRepository->getDetail($this->request->id);
+        $positions = $this->positionRepository->getDetail($this->request->id);
+        $grades = $this->gradeRepository->getDetail($this->request->id);
+        $structurals = $this->trainingRepository->getDetail($this->request->id, 1);
+        $functionals = $this->trainingRepository->getDetail($this->request->id, 2);
+        $technicals = $this->trainingRepository->getDetail($this->request->id, 3);
+        $recognitions = $this->recognitionRepository->getDetail($this->request->id);
+        $targets = $this->targetRepository->getDetail($this->request->id);
+        $performances = $this->performanceRepository->getDetail($this->request->id);
+        $disciplinaries = $this->disciplinaryRepository->getDetail($this->request->id);
+        $leaves = $this->leaveRepository->getDetail($this->request->id);
+        $notes = $this->noteRepository->getDetail($this->request->id);
+        $credits = $this->creditRepository->getDetail($this->request->id);
+        $assessments = $this->assessmentRepository->getDetail($this->request->id);
+        $competencies = $this->competencyRepository->getDetail($this->request->id);
+        $talents = $this->talentRepository->getDetail($this->request->id);
+        $position = array_reverse((array) $this->positionRepository->getRecursivePosition($employee->position_id));
+
+        $employee->position = $position;
+        $employee->educations = $educations;
+        $employee->families = $families;
+        $employee->positions = $positions;
+        $employee->grades = $grades;
+        $employee->structurals = $structurals;
+        $employee->functionals = $functionals;
+        $employee->technicals = $technicals;
+        $employee->recognitions = $recognitions;
+        $employee->targets = $targets;
+        $employee->performances = $performances;
+        $employee->disciplinaries = $disciplinaries;
+        $employee->leaves = $leaves;
+        $employee->notes = $notes;
+        $employee->credits = $credits;
+        $employee->assessments = $assessments;
+        $employee->competencies = $competencies;
+        $employee->talents = $talents;
+
+        return $this->response(200, 'success', $employee);
     }
 }

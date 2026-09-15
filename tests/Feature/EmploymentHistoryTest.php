@@ -117,7 +117,6 @@ it('registers the two history route groups in source order without Employee deta
         ['method' => 'DELETE', 'uri' => 'api/grade-histories/{id}', 'action' => 'App\\Http\\Controllers\\GradeHistoryController@delete', 'middleware' => ['api', 'auth:sanctum', 'role.access']],
     ]);
 
-    expect(collect(Route::getRoutes()->getRoutes())->contains(fn ($route): bool => $route->uri() === 'api/employees/{id}'))->toBeFalse();
 });
 
 describe('Position and Grade history on the guarded MySQL clone', function () {

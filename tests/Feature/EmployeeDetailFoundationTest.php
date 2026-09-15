@@ -150,9 +150,9 @@ function phaseTwelveExpectedPositionMerged(object $user): string
     return implode(', ', $names);
 }
 
-it('does not activate the aggregate Employee detail route in Phase 12', function () {
+it('preserves the Employee index route while its core detail repository remains available', function () {
     $employeeRoutes = collect(Route::getRoutes()->getRoutes())
-        ->filter(fn ($route): bool => str_starts_with($route->uri(), 'api/employees'))
+        ->filter(fn ($route): bool => $route->uri() === 'api/employees')
         ->map(fn ($route): array => [$route->methods()[0], $route->uri(), $route->getActionName()])
         ->values()
         ->all();

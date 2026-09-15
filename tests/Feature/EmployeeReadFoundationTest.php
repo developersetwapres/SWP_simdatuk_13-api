@@ -95,9 +95,9 @@ function phaseElevenActingAsRestrictedReader(array $readPermissions): User
     return $user;
 }
 
-it('registers only the Employee index route in source order for Phase 11', function () {
+it('preserves the Employee index route introduced in Phase 11', function () {
     $routes = collect(Route::getRoutes()->getRoutes())
-        ->filter(fn ($route): bool => str_starts_with($route->uri(), 'api/employees'))
+        ->filter(fn ($route): bool => $route->uri() === 'api/employees')
         ->map(fn ($route): array => [
             'method' => $route->methods()[0],
             'uri' => $route->uri(),

@@ -119,7 +119,7 @@ function phaseFifteenTrainingPayload(int $type, int $userId, string $name): arra
     ];
 }
 
-it('registers Training and Recognition history routes in Laravel 10 declaration order and keeps Employee detail disabled', function () {
+it('registers Training and Recognition history routes in Laravel 10 declaration order', function () {
     $routes = collect(Route::getRoutes()->getRoutes())
         ->filter(fn ($route): bool => str_starts_with($route->uri(), 'api/training-histories') || str_starts_with($route->uri(), 'api/recognition-histories'))
         ->map(fn ($route): array => [
@@ -147,7 +147,6 @@ it('registers Training and Recognition history routes in Laravel 10 declaration 
         ['method' => 'DELETE', 'uri' => 'api/recognition-histories/{id}', 'action' => 'App\\Http\\Controllers\\RecognitionHistoryController@delete', 'middleware' => ['api', 'auth:sanctum', 'role.access']],
     ]);
 
-    expect(collect(Route::getRoutes()->getRoutes())->contains(fn ($route): bool => $route->uri() === 'api/employees/{id}'))->toBeFalse();
 });
 
 describe('Training and Recognition histories on the guarded MySQL clone', function () {

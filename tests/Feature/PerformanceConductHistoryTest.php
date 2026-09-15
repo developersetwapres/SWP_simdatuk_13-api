@@ -104,7 +104,7 @@ function phaseSixteenPayload(string $domain, int $userId, string $name): array
     };
 }
 
-it('registers the three Phase 16 five-route groups in source order and keeps Employee detail disabled', function () {
+it('registers the three Phase 16 five-route groups in source order', function () {
     $prefixes = ['api/target-histories', 'api/performance-histories', 'api/disciplinary-histories'];
     $routes = collect(Route::getRoutes()->getRoutes())
         ->filter(fn ($route): bool => collect($prefixes)->contains(fn (string $prefix): bool => str_starts_with($route->uri(), $prefix)))
@@ -125,7 +125,6 @@ it('registers the three Phase 16 five-route groups in source order and keeps Emp
             ['DELETE', 'api/'.$path.'/{id}', 'App\\Http\\Controllers\\'.$controller.'@delete', ['api', 'auth:sanctum', 'role.access']],
         ]);
     }
-    expect(collect(Route::getRoutes()->getRoutes())->contains(fn ($route): bool => $route->uri() === 'api/employees/{id}'))->toBeFalse();
 });
 
 describe('Phase 16 histories on the guarded MySQL clone', function () {

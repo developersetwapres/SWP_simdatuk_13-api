@@ -57,7 +57,7 @@ class PositionRepository
     }
 
     /** @return array<int, object> */
-    public function getRecursivePosition(int|string $positionId, ?int $limit = null): array
+    public function getRecursivePosition(int|string|null $positionId, ?int $limit = null): array
     {
         $sql = "WITH RECURSIVE hierarchy AS (
             SELECT
