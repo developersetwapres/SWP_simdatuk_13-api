@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DecreeController;
 use App\Http\Controllers\DisciplinaryController;
 use App\Http\Controllers\EchelonController;
+use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\EmploymentTypeController;
 use App\Http\Controllers\GradeController;
 use App\Http\Controllers\GroupController;
@@ -27,6 +28,8 @@ Route::middleware(['auth:sanctum', 'role.access'])->group(function (): void {
     Route::delete('logout', [AuthController::class, 'logout']);
     Route::delete('logout-all-devices', [AuthController::class, 'logoutAllDevices']);
     Route::get('active-sessions', [AuthController::class, 'getActiveSessions']);
+
+    Route::get('employees', [EmployeeController::class, 'index']);
 
     Route::prefix('positions')->group(function (): void {
         Route::get('/', [PositionController::class, 'index']);
