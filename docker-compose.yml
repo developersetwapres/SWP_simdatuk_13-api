@@ -1,0 +1,21 @@
+services:
+  app:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    image: simdatukswp
+    container_name: simdatukswp-app
+    restart: unless-stopped
+    working_dir: /var/www/
+    ports:
+      - "8005:8080"
+    networks:
+      - dbmysql-network
+      - s3minio-network
+
+networks:
+  dbmysql-network:
+    external: true
+
+  s3minio-network:
+    external: true
