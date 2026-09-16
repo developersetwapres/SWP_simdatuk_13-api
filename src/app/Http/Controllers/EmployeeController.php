@@ -118,8 +118,8 @@ class EmployeeController extends Controller
         );
 
         $users->where(function ($query): void {
-            $query->where('u.name', 'like', '%'.$this->request->search.'%')
-                ->orWhere('u.employee_id_number', 'like', '%'.$this->request->search.'%');
+            $query->where('u.name', 'like', '%' . $this->request->search . '%')
+                ->orWhere('u.employee_id_number', 'like', '%' . $this->request->search . '%');
         });
 
         if (! is_null($this->request->type)) {
