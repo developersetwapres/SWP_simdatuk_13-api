@@ -1,10 +1,10 @@
 services:
-  app:
+  simdatuk-api_app:
     build:
       context: ./
       dockerfile: Dockerfile
-    image: simdatukswp
-    container_name: simdatukswp-app
+    image: simdatuk-api:latest
+    container_name: swp_simdatuk-api
     restart: unless-stopped
     working_dir: /var/www/
     ports:
