@@ -1,30 +1,44 @@
 services:
-  simdatuk13-api_app:
+  simdatuk13-api:
     build:
       context: .
       dockerfile: Dockerfile
 
     image: simdatuk13-api:latest
-    container_name: swp_simdatuk13-api
+    container_name: simdatuk13-api
 
-    restart: unless-stopped
-
-    working_dir: /var/www
+    restart: always
 
     ports:
       - "8011:8080"
 
+    working_dir: /var/www
+
+    volumes:
+      - ${APP_VOLUME}:/var/www
+
     env_file:
       - ./src/.env
 
+    networks:
+      - simdatuk_network
+
+  maildev:
+    image: maildev/maildev:latest
+    container_name: simdatuk13-maildev
+    restart: always
+
+    ports:
+      - "1025:1025"
+      - "1080:1080"
+
     environment:
-      APP_ENV: production
-      APP_DEBUG: "false"
-      TZ: Asia/Jakarta
+      MAILDEV_SMTP_PORT: 1025
+      MAILDEV_WEB_PORT: 1080
 
     networks:
-      - nginx-network
+      - simdatuk_network
 
 networks:
-  nginx-network:
-    external: true
+  simdatuk_network:
+    name: simdatuk_network
