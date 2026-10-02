@@ -55,7 +55,7 @@ COPY ./config/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 COPY src/ /var/www
 
-COPY ./config/.env /var/www
+COPY ./config-simdatuk/.env /var/www
 
 # Copy images from public/images to storage/app/public/images
 #RUN mkdir -p storage/app/public/images 
