@@ -1,77 +1,68 @@
-FROM alpine
-LABEL Maintainer="Pusat Pengembangan dan Layanan Sistem Informasi <setnegapps@setneg.go.id>"
+
+FROM php:8.4-fpm
 
 WORKDIR /var/www
 
-RUN apk add --no-cache \
-  curl \
-  nginx \
-  nodejs \
-  npm \
-  php84 \
-  php84-bcmath \
-  php84-ctype \
-  php84-curl \
-  php84-dom \
-  php84-fileinfo \
-  php84-fpm \
-  php84-gd \
-  php84-iconv \
-  php84-intl \
-  php84-ldap \
-  php84-mbstring \
-  php84-mysqli \
-  php84-opcache \
-  php84-openssl \
-  php84-pdo \
-  php84-pdo_mysql \
-  php84-pdo_pgsql \
-  php84-pgsql \
-  php84-pecl-imagick \
-  php84-phar \
-  php84-session \
-  php84-simplexml \
-  php84-tokenizer \
-  php84-xml \
-  php84-xmlreader \
-  php84-xmlwriter \
-  php84-zip \
-  supervisor \
-  tzdata \
-  postgresql-client
+# System dependencies
+RUN apt-get update && apt-get install -y \
+    bash \
+    libzip-dev \
+    unzip \
+    git \
+    curl \
+    nginx \
+    supervisor \
+    vim \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN ln -sf /usr/bin/php84 /usr/bin/php
+# PHP extensions and Composer
+RUN curl -sSL https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions \
+    -o /usr/local/bin/install-php-extensions \
+    && chmod +x /usr/local/bin/install-php-extensions \
+    && install-php-extensions \
+        ctype \
+        curl \
+        dom \
+        fileinfo \
+        filter \
+        hash \
+        mbstring \
+        openssl \
+        pcre \
+        pdo \
+        pdo_mysql \
+        session \
+        tokenizer \
+        xml \
+        gd \
+        zip \
+        @composer
 
-COPY --from=composer/composer:latest-bin /composer /usr/bin/composer
+# Copy Laravel source into container
+COPY ./src/ /var/www/
 
-ENV TZ Asia/Jakarta
+# Copy infrastructure configuration
+COPY ./config/nginx.conf /etc/nginx/nginx.conf
+COPY ./config/fpm-pool.conf /usr/local/etc/php-fpm.d/www.conf
+COPY ./config/php.ini /usr/local/etc/php/conf.d/99-custom.ini
+COPY ./config/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-#RUN mkdir /data/simdatukswp
+# Install dependencies
+RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
 
-COPY ./config-simdatuk/nginx.conf /etc/nginx/nginx.conf
-COPY ./config-simdatuk/fpm-pool.conf /etc/php84/php-fpm.d/www.conf
-COPY ./config-simdatuk/php.ini /etc/php84/conf.d/custom.ini
-COPY ./config-simdatuk/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+# Laravel permissions
+RUN mkdir -p /var/www/storage/framework/cache \
+    /var/www/storage/framework/sessions \
+    /var/www/storage/framework/views \
+    /var/www/storage/logs \
+    && chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
 
-COPY src/ /var/www
-
-COPY ./config-simdatuk/.env /var/www
-
-RUN ln -s /data/simdatukswp/images /var/www/storage/app/public/images
-
-RUN composer install --optimize-autoloader --no-dev
-
+# Storage symlink
 RUN php artisan storage:link
-
-RUN npm install --legacy-peer-deps
-RUN npm run build && rm -f public/hot
-
-RUN addgroup -g 1945 -S pplsi && adduser -u 1945 -S pplsi -G pplsi
-RUN chown -R pplsi:pplsi /var/www /run /var/lib/nginx /var/log/nginx
-USER pplsi
 
 EXPOSE 8080
 
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+CMD ["supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
 
-HEALTHCHECK --timeout=10s CMD curl --silent --fail http://127.0.0.1:8080/fpm-ping
+HEALTHCHECK --interval=60s --timeout=10s --start-period=30s --retries=3 \
+    CMD curl -f http://127.0.0.1:8080/api || exit 1
