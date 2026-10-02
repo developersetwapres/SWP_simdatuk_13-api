@@ -7,15 +7,3 @@ services:
     container_name: swp_simdatuk13-api
     restart: unless-stopped
     working_dir: /var/www/
-    ports:
-      - "8006:8080"
-    networks:
-      - dbmysql-network
-      - s3minio-network
-
-networks:
-  dbmysql-network:
-    external: true
-
-  s3minio-network:
-    external: true
