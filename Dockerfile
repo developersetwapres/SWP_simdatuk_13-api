@@ -48,22 +48,19 @@ ENV TZ Asia/Jakarta
 
 #RUN mkdir /data/simdatukswp
 
-COPY ./config/nginx.conf /etc/nginx/nginx.conf
-COPY ./config/fpm-pool.conf /etc/php84/php-fpm.d/www.conf
-COPY ./config/php.ini /etc/php84/conf.d/custom.ini
-COPY ./config/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY ./config-simdatuk/nginx.conf /etc/nginx/nginx.conf
+COPY ./config-simdatuk/fpm-pool.conf /etc/php84/php-fpm.d/www.conf
+COPY ./config-simdatuk/php.ini /etc/php84/conf.d/custom.ini
+COPY ./config-simdatuk/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 COPY src/ /var/www
 
 COPY ./config-simdatuk/.env /var/www
 
-# Copy images from public/images to storage/app/public/images
-#RUN mkdir -p storage/app/public/images 
-
 RUN ln -s /data/simdatukswp/images /var/www/storage/app/public/images
 
 RUN composer install --optimize-autoloader --no-dev
-# RUN composer install 
+
 RUN php artisan storage:link
 
 RUN npm install --legacy-peer-deps
