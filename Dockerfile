@@ -48,21 +48,15 @@ ENV TZ Asia/Jakarta
 
 COPY src/ /var/www
 
-# Copy .env file
-COPY ./config-simdatuk/.env .env
-
-# Use the matching PHP-FPM pool and Nginx configuration.
-COPY config/fpm-pool.conf /etc/php84/php-fpm.d/www.conf
-COPY config/nginx.conf /etc/nginx/nginx.conf
+COPY docker/nginx.conf /etc/nginx/nginx.conf
+COPY docker/local.conf /etc/nginx/conf.d/default.conf
+COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 RUN ln -s /data/simdatukswp/images /var/www/storage/app/public/images
 
 RUN composer install --optimize-autoloader --no-dev
 
 RUN php artisan storage:link
-
-# Supervisor configuration
-COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 RUN npm install --legacy-peer-deps
 RUN npm run build && rm -f public/hot
@@ -75,4 +69,4 @@ EXPOSE 8080
 
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
 
-HEALTHCHECK --timeout=10s CMD curl --silent --fail http://127.0.0.1:8080/fpm-ping
+HEALTHCHECK --timeout=10s CMD curl --silent --fail http://127.0.0.1:8080/up
