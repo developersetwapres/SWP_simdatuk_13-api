@@ -46,10 +46,10 @@ COPY --from=composer/composer:latest-bin /composer /usr/bin/composer
 
 ENV TZ Asia/Jakarta
 
-COPY ./config-simdatuk/nginx.conf /etc/nginx/nginx.conf
-COPY ./config-simdatuk/fpm-pool.conf /etc/php84/php-fpm.d/www.conf
-COPY ./config-simdatuk/php.ini /etc/php84/conf.d/custom.ini
-COPY ./config-simdatuk/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY ./config/nginx.conf /etc/nginx/nginx.conf
+COPY ./config/fpm-pool.conf /etc/php84/php-fpm.d/www.conf
+COPY ./config/php.ini /etc/php84/conf.d/custom.ini
+COPY ./config/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 COPY src/ /var/www
 
