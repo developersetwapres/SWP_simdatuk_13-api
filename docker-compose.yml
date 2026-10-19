@@ -6,35 +6,13 @@ services:
 
     image: simdatuk13-api:latest
     container_name: simdatuk13-api
-
     restart: always
 
     ports:
       - "8011:8080"
 
-    working_dir: /var/www
-
-    volumes:
-      - ${APP_VOLUME}:/var/www
-
     env_file:
       - ./src/.env
-
-    networks:
-      - simdatuk_network
-
-  maildev:
-    image: maildev/maildev:latest
-    container_name: simdatuk13-maildev
-    restart: always
-
-    ports:
-      - "1025:1025"
-      - "1080:1080"
-
-    environment:
-      MAILDEV_SMTP_PORT: 1025
-      MAILDEV_WEB_PORT: 1080
 
     networks:
       - simdatuk_network
