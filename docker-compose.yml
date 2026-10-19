@@ -5,11 +5,11 @@ services:
       dockerfile: Dockerfile
 
     image: simdatuk13-api:latest
-    container_name: simdatuk13-api
+    container_name: simdatuk-api
     restart: always
 
     ports:
-      - "8011:8080"
+      - 80:8080
 
     env_file:
       - ./src/.env
