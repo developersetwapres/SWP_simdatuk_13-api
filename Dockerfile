@@ -46,6 +46,11 @@ COPY --from=composer/composer:latest-bin /composer /usr/bin/composer
 
 ENV TZ Asia/Jakarta
 
+COPY ./config-simdatuk/nginx.conf /etc/nginx/nginx.conf
+COPY ./config-simdatuk/fpm-pool.conf /etc/php84/php-fpm.d/www.conf
+COPY ./config-simdatuk/php.ini /etc/php84/conf.d/custom.ini
+COPY ./config-simdatuk/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
 COPY src/ /var/www
 
 # Copy .env file
@@ -56,13 +61,6 @@ RUN ln -s /data/simdatukswp/images /var/www/storage/app/public/images
 RUN composer install --optimize-autoloader --no-dev
 
 RUN php artisan storage:link
-
-# Nginx configuration
-COPY docker/nginx.conf /etc/nginx/nginx.conf
-COPY docker/local.conf /etc/nginx/conf.d
-
-# Supervisor configuration
-COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 RUN npm install --legacy-peer-deps
 RUN npm run build && rm -f public/hot
