@@ -52,8 +52,6 @@ COPY docker/nginx.conf /etc/nginx/nginx.conf
 COPY docker/local.conf /etc/nginx/conf.d/default.conf
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-RUN ln -s /data/simdatukswp/images /var/www/storage/app/public/images
-
 RUN composer install --optimize-autoloader --no-dev
 
 RUN php artisan storage:link
