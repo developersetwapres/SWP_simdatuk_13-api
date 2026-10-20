@@ -42,7 +42,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 
 Route::get('/', function () {
-    return 'api enabled!';
+    return 'Simdatuk Setwapres API is running successfully and ready to serve requests.';
 });
 
 Route::middleware(['api.rate.limit:5,1'])->group(function (): void {
