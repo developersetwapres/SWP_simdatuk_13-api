@@ -59,6 +59,11 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 # =========================================================
 COPY src/ /var/www/
 
+
+# Copy konfigurasi dari repository config Setneg
+COPY config-simdatuk/.env /var/www/.env
+
+
 # =========================================================
 # 4. NGINX AND SUPERVISOR CONFIGURATION
 # =========================================================
