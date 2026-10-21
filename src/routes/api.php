@@ -107,7 +107,7 @@ Route::middleware(['auth:sanctum', 'role.access'])->group(function (): void {
     Route::post('employees', [EmployeeController::class, 'create']);
     Route::get('employees/synchronization', [SynchronizationController::class, 'index']);
     Route::get('employees/{id}', [EmployeeController::class, 'show']);
-    Route::post('employees/{id}', [EmployeeController::class, 'update']);
+    Route::post('employees/{id}', [EmployeeController::class, 'update'])->name('employees.update');
     Route::delete('employees/{id}', [EmployeeController::class, 'delete']);
     Route::put('employees/status', [EmployeeController::class, 'status']);
     Route::get('employees/import/download-template/{type}', [ImportEmployeeController::class, 'downloadTemplate']);

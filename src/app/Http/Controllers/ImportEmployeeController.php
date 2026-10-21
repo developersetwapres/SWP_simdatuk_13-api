@@ -654,17 +654,36 @@ class ImportEmployeeController extends Controller
 
         $this->type = $request->type;
 
-        $employeesImport = new EmployeesImport();
+        $expectedSheetCount = match ((int) $this->type) {
+            1 => 17,
+            2 => 2,
+            3 => 6,
+        };
+        $employeesImport = new EmployeesImport($expectedSheetCount);
         $extension = $request->file('file')->extension();
-        // Import sheets
-        if ($extension == 'csv') {
-            Excel::import($employeesImport, $request->file('file')->path(), null, \Maatwebsite\Excel\Excel::CSV);
-        } else {
-            Excel::import($employeesImport, $request->file('file')->path(), null, \Maatwebsite\Excel\Excel::XLSX);
+        try {
+            // Import sheets
+            if ($extension == 'csv') {
+                Excel::import($employeesImport, $request->file('file')->path(), null, \Maatwebsite\Excel\Excel::CSV);
+            } else {
+                Excel::import($employeesImport, $request->file('file')->path(), null, \Maatwebsite\Excel\Excel::XLSX);
+            }
+        } catch (\Throwable $exception) {
+            Log::warning('Employee import workbook could not be read.', [
+                'employee_type' => (int) $this->type,
+                'exception' => get_class($exception),
+            ]);
+            $this->skippedRow('Workbook', 0, 'File workbook tidak dapat dibaca atau struktur sheet tidak lengkap');
+
+            return $this->save([], $request->user()->id);
         }
 
         // Extract data from imports
-        $employeesData = $employeesImport->data;
+        $employeesData = $employeesImport->data();
+
+        if ($this->type == 3 && ! $this->validateOutsourceWorkbook($employeesData, $employeesImport->sheetNames())) {
+            return $this->save([], $request->user()->id);
+        }
 
         if ($request->type == 3) { // Outsource
             $personalInfo = $this->removeNullRows($employeesData[0]) ?? []; // Sheet 1 : Data Pegawai
@@ -729,8 +748,18 @@ class ImportEmployeeController extends Controller
         }
 
         // Map Data Master
-        $this->employmentTypes = $this->getNameIdMapping('employment_types', ['status' => 1]);
-        $positions = DB::table('positions')->select("id", "parent_id", DB::raw("LOWER(REPLACE(name, ' ', '')) as name"))->orderBy('parent_id')->get()->toArray();
+        $this->employmentTypes = $this->getNameIdMapping('employment_types', [
+            'status' => 1,
+            'type' => $this->type,
+        ], 'name', true);
+        $positionTypes = $this->type == 3 ? [3] : [1, 2];
+        $positions = DB::table('positions')
+            ->select('id', 'parent_id', DB::raw("LOWER(REPLACE(name, ' ', '')) as name"))
+            ->whereIn('type', $positionTypes)
+            ->orderBy('parent_id')
+            ->orderBy('id')
+            ->get()
+            ->toArray();
         $this->positions = $this->buildHierarchy($positions);
         $this->grades = $this->getNameIdMapping('grades');
         $this->echelons = $this->getNameIdMapping('echelons');
@@ -1132,6 +1161,7 @@ class ImportEmployeeController extends Controller
     private function personalInfo($personalInfo)
     {
         $result = [];
+        $workbookIdentifiers = [];
         foreach ($personalInfo as $personalInfoKey => $personalInfoRow) {
             if ($personalInfoKey == 0) {
                 continue;
@@ -1191,6 +1221,58 @@ class ImportEmployeeController extends Controller
                     'office_email',
                     'emergency_contact'
                 ];
+            }
+
+            foreach ([
+                'employee_id_number',
+                'id_number',
+                'id_tax',
+                'family_registration_number',
+                'home_phone_number',
+                'mobile_phone',
+                'office_phone_number',
+                'email',
+            ] as $identifierField) {
+                if (! array_key_exists($identifierField, $personalInfoPos)) {
+                    continue;
+                }
+
+                $column = $personalInfoPos[$identifierField];
+                $value = $personalInfoRow[$column] ?? null;
+                if (is_scalar($value)) {
+                    $value = trim((string) $value);
+                    $personalInfoRow[$column] = $value;
+                }
+
+                if ($value !== null && $value !== '' && $this->looksLikeScientificNotation($value)) {
+                    $this->skippedRow(
+                        'Data Pegawai',
+                        $personalInfoKey,
+                        'Kolom '.$personalInfo[0][$column].' tidak boleh menggunakan notasi ilmiah',
+                    );
+                }
+            }
+
+            foreach (['id_number', 'employee_id_number', 'email', 'id_tax'] as $uniqueField) {
+                $column = $personalInfoPos[$uniqueField];
+                $value = $personalInfoRow[$column] ?? null;
+                if ($value === null || $value === '') {
+                    continue;
+                }
+
+                $normalizedValue = $uniqueField === 'email'
+                    ? strtolower((string) $value)
+                    : (string) $value;
+                if (isset($workbookIdentifiers[$uniqueField][$normalizedValue])) {
+                    $firstRow = $workbookIdentifiers[$uniqueField][$normalizedValue];
+                    $this->skippedRow(
+                        'Data Pegawai',
+                        $personalInfoKey,
+                        'Kolom '.$personalInfo[0][$column].' duplikat dengan baris '.$firstRow,
+                    );
+                } else {
+                    $workbookIdentifiers[$uniqueField][$normalizedValue] = $personalInfoKey + 1;
+                }
             }
 
             foreach ($requiredFields as $key => $field) {
@@ -2209,7 +2291,7 @@ class ImportEmployeeController extends Controller
      * @param array $conditions (Optional) An associative array of conditions for the query.
      * @return array An associative array where the keys are the processed names and the values are the IDs.
      */
-    private function getNameIdMapping($tableName, $conditions = [], $name = 'name')
+    private function getNameIdMapping($tableName, $conditions = [], $name = 'name', $failOnDuplicate = false)
     {
         // Query the specified table and select the id and the processed name
         $query = DB::table($tableName);
@@ -2221,13 +2303,17 @@ class ImportEmployeeController extends Controller
         }
 
         // Execute the query and get the results
-        $results = $query->get();
+        $results = $query->orderBy('id')->get();
 
         // Initialize an array to hold the name to id mapping
         $nameIdMapping = [];
 
         // Populate the array with processed names as keys and their corresponding ids as values
         foreach ($results as $row) {
+            if ($failOnDuplicate && array_key_exists($row->name, $nameIdMapping)) {
+                $nameIdMapping[$row->name] = null;
+                continue;
+            }
             $nameIdMapping[$row->name] = $row->id;
         }
 
@@ -2245,6 +2331,10 @@ class ImportEmployeeController extends Controller
                 $children = $this->buildHierarchy($elements, $element['id']);
                 if ($children) {
                     $element['child'] = $children;
+                }
+                if (array_key_exists($element['name'], $branch)) {
+                    $branch[$element['name']] = ['ambiguous' => true];
+                    continue;
                 }
                 $branch[$element['name']] = [
                     'id' => $element['id'],
@@ -2277,6 +2367,11 @@ class ImportEmployeeController extends Controller
             $jabatan = strtolower(str_replace(' ', '', $segment));
             if (isset($positions[$jabatan])) {
                 $positions = $positions[$jabatan];
+                if (isset($positions['ambiguous'])) {
+                    $this->skippedRow('Data Pegawai', $row, 'Jabatan "'.$segment.'" ambigu');
+
+                    return null;
+                }
                 if (isset($positions['child']) && $key < $count) {
                     $positions = $positions['child'];
                 }
@@ -2287,6 +2382,57 @@ class ImportEmployeeController extends Controller
         }
 
         return isset($positions['id']) ? $positions['id'] : null;
+    }
+
+    /**
+     * Validate the canonical six-sheet Outsourcing workbook before any row is persisted.
+     *
+     * @param  array<int, array<int, array<int, mixed>>>  $sheets
+     * @param  array<int, string|null>  $sheetNames
+     */
+    private function validateOutsourceWorkbook(array $sheets, array $sheetNames): bool
+    {
+        $contracts = [
+            ['name' => 'Data Pegawai', 'width' => 27],
+            ['name' => 'Riwayat Pendidikan', 'width' => 10],
+            ['name' => 'Riwayat Jabatan', 'width' => 19],
+            ['name' => 'Riwayat Pelatihan Teknis', 'width' => 11],
+            ['name' => 'Riwayat Keluarga', 'width' => 19],
+            ['name' => 'Riwayat Catatan', 'width' => 3],
+        ];
+
+        foreach ($contracts as $index => $contract) {
+            if (($sheetNames[$index] ?? null) !== $contract['name']) {
+                $this->skippedRow(
+                    'Workbook',
+                    0,
+                    'Sheet ke-'.($index + 1).' harus bernama "'.$contract['name'].'"',
+                );
+                continue;
+            }
+
+            $header = $sheets[$index][0] ?? null;
+            if (! is_array($header) || ! array_key_exists($contract['width'] - 1, $header)) {
+                $this->skippedRow(
+                    $contract['name'],
+                    0,
+                    'Jumlah kolom tidak sesuai dengan template canonical',
+                );
+            }
+        }
+
+        $rootRows = isset($sheets[0]) ? array_values($this->removeNullRows($sheets[0])) : [];
+        if (count($rootRows) < 2) {
+            $this->skippedRow('Data Pegawai', 1, 'Minimal satu baris data pegawai harus diisi');
+        }
+
+        return count($this->skippedRow) === 0;
+    }
+
+    private function looksLikeScientificNotation($value): bool
+    {
+        return is_string($value)
+            && preg_match('/^[+-]?\d+(?:\.\d+)?e[+-]?\d+$/i', $value) === 1;
     }
 
     // Filter out rows where all elements are null

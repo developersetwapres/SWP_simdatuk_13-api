@@ -110,14 +110,14 @@ function phaseTwentyThreeWorkbook(int $type, string $marker, bool $duplicate = f
     }
 
     if ($type === 1) {
-        $values = [13 => 'TNI/POLRI', 14 => '01/01/2020', 16 => 'Plt. Sekretaris Wakil Presiden',
+        $values = [13 => 'TNI/POLRI', 14 => '01/01/2020', 16 => 'Perbantuan Non ASN',
             17 => '01/01/2020', 18 => 'Pembina Utama', 19 => '01/01/2020', 23 => 'SD/Sederajat',
             33 => 'Aktif', 35 => $nik, 44 => $marker.'@example.invalid', 45 => 'Kontak 08123456789'];
     } elseif ($type === 2) {
-        $values = [11 => 'TNI/POLRI', 13 => 'Perbantuan Non ASN', 14 => '01/01/2020',
+        $values = [11 => 'SIPIL', 13 => 'Perbantuan Non ASN', 14 => '01/01/2020',
             20 => 'SD/Sederajat', 24 => 'Aktif', 26 => $nik, 35 => 'Kontak 08123456789'];
     } else {
-        $values = [8 => 'TNI/POLRI', 9 => '01/01/2020', 10 => 'Pengemudi', 11 => '01/01/2020',
+        $values = [8 => 'OUTSOURCE', 9 => '01/01/2020', 10 => 'Pengemudi', 11 => '01/01/2020',
             12 => 'SD/Sederajat', 16 => 'Aktif', 18 => $nik, 27 => 'Kontak 08123456789'];
     }
     foreach ($values as $column => $value) {
@@ -259,15 +259,101 @@ describe('Phase 23 import on the guarded MySQL clone', function () {
         expect(phaseTwentyThreeConnection()->table('users')->where('name', 'Phase 23 '.$marker)->exists())->toBeFalse();
     });
 
+    it('fails closed when an Outsourcing workbook uses a cross-domain employment type', function () {
+        phaseTwentyThreeActingAs(true, 3);
+        $marker = phaseTwentyThreePrefix();
+        $path = phaseTwentyThreeWorkbook(3, $marker);
+        $book = IOFactory::load($path);
+        $book->getSheet(0)->setCellValue('H2', 'TNI/POLRI');
+        IOFactory::createWriter($book, 'Xlsx')->save($path);
+        $this->phaseTwentyThreeFiles[] = $path;
+
+        $this->post('/api/employees/import', ['type' => '3', 'file' => phaseTwentyThreeUpload($path)])
+            ->assertStatus(400)->assertJsonPath('message', 'Import pegawai gagal')
+            ->assertJsonStructure(['data' => ['log_id']]);
+
+        expect(phaseTwentyThreeConnection()->table('users')->where('name', 'Phase 23 '.$marker)->exists())->toBeFalse();
+    });
+
+    it('rejects duplicate Outsourcing identifiers before persisting any workbook row', function () {
+        phaseTwentyThreeActingAs(true, 3);
+        $marker = phaseTwentyThreePrefix();
+        $path = phaseTwentyThreeWorkbook(3, $marker);
+        $book = IOFactory::load($path);
+        $sheet = $book->getSheet(0);
+        for ($column = 1; $column <= 27; $column++) {
+            $sheet->setCellValue([$column, 3], $sheet->getCell([$column, 2])->getValue());
+        }
+        $sheet->setCellValue('A3', 'Phase 23 '.$marker.' second');
+        $sheet->setCellValue('B3', '923'.substr(hash('sha256', 'second'.$marker), 0, 12));
+        IOFactory::createWriter($book, 'Xlsx')->save($path);
+        $this->phaseTwentyThreeFiles[] = $path;
+
+        $this->post('/api/employees/import', ['type' => '3', 'file' => phaseTwentyThreeUpload($path)])
+            ->assertStatus(400)->assertJsonPath('message', 'Import pegawai gagal')
+            ->assertJsonStructure(['data' => ['log_id']]);
+
+        expect(phaseTwentyThreeConnection()->table('users')->where('name', 'like', 'Phase 23 '.$marker.'%')->exists())->toBeFalse();
+    });
+
+    it('preserves leading-zero Outsourcing identifiers and rejects scientific notation', function () {
+        phaseTwentyThreeActingAs(true, 3);
+        $marker = phaseTwentyThreePrefix();
+        $path = phaseTwentyThreeWorkbook(3, $marker);
+        $book = IOFactory::load($path);
+        $sheet = $book->getSheet(0);
+        $sheet->setCellValueExplicit('B2', '001234', \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+        $sheet->setCellValueExplicit('Q2', '0000000000000040', \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+        $sheet->setCellValueExplicit('R2', '0000000000000030', \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+        $sheet->setCellValueExplicit('U2', '001122', \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+        $sheet->setCellValueExplicit('V2', '008899', \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+        IOFactory::createWriter($book, 'Xlsx')->save($path);
+        $this->phaseTwentyThreeFiles[] = $path;
+
+        $this->post('/api/employees/import', ['type' => '3', 'file' => phaseTwentyThreeUpload($path)])->assertOk();
+        $employee = phaseTwentyThreeConnection()->table('users')->where('id_number', '0000000000000030')->firstOrFail();
+        expect($employee->employee_id_number)->toBe('001234')
+            ->and($employee->family_registration_number)->toBe('0000000000000040')
+            ->and($employee->home_phone_number)->toBe('001122')
+            ->and($employee->mobile_phone)->toBe('008899');
+
+        $scientificMarker = phaseTwentyThreePrefix();
+        $scientificPath = phaseTwentyThreeWorkbook(3, $scientificMarker);
+        $scientificBook = IOFactory::load($scientificPath);
+        $scientificBook->getSheet(0)->setCellValueExplicit('B2', '1.234E+15', \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+        IOFactory::createWriter($scientificBook, 'Xlsx')->save($scientificPath);
+        $this->phaseTwentyThreeFiles[] = $scientificPath;
+
+        $this->post('/api/employees/import', ['type' => '3', 'file' => phaseTwentyThreeUpload($scientificPath)])
+            ->assertStatus(400)->assertJsonPath('message', 'Import pegawai gagal');
+        expect(phaseTwentyThreeConnection()->table('users')->where('name', 'Phase 23 '.$scientificMarker)->exists())->toBeFalse();
+    });
+
+    it('rejects a non-canonical Outsourcing sheet name before persistence', function () {
+        phaseTwentyThreeActingAs(true, 3);
+        $marker = phaseTwentyThreePrefix();
+        $path = phaseTwentyThreeWorkbook(3, $marker);
+        $book = IOFactory::load($path);
+        $book->getSheet(1)->setTitle('Pendidikan Salah');
+        IOFactory::createWriter($book, 'Xlsx')->save($path);
+        $this->phaseTwentyThreeFiles[] = $path;
+
+        $this->post('/api/employees/import', ['type' => '3', 'file' => phaseTwentyThreeUpload($path)])
+            ->assertStatus(400)->assertJsonPath('message', 'Import pegawai gagal')
+            ->assertJsonStructure(['data' => ['log_id']]);
+
+        expect(phaseTwentyThreeConnection()->table('users')->where('name', 'Phase 23 '.$marker)->exists())->toBeFalse();
+    });
+
     it('preserves validation, authorization, malformed workbook, history, and missing artifact contracts', function () {
         phaseTwentyThreeActingAs(false, 1);
         $this->postJson('/api/employees/import', ['type' => 1])->assertForbidden();
 
         phaseTwentyThreeActingAs(true, 1);
         $validation = $this->postJson('/api/employees/import', [])->assertStatus(422);
-        expect($validation->json())->toHaveKeys(['message', 'errors'])
-            ->and($validation->json('errors.file.0'))->toBe('The file field is required.');
-        $this->getJson('/api/employees/import/histories')->assertStatus(422)->assertJsonPath('errors.type.0', 'Type harus diisi.');
+        expect($validation->json())->toHaveKeys(['code', 'message', 'data'])
+            ->and($validation->json('data.file.0'))->toBe('The file field is required.');
+        $this->getJson('/api/employees/import/histories')->assertStatus(422)->assertJsonPath('data.type.0', 'Type harus diisi.');
         $this->getJson('/api/employees/import/download-template/99?type=1')->assertStatus(404)->assertJsonPath('message', 'File not found.');
         $this->getJson('/api/employees/import/download-failed-import/not-numeric?type=1')->assertStatus(400)
             ->assertJsonPath('message', 'Hasil error import tidak ditemukan');
@@ -283,6 +369,6 @@ describe('Phase 23 import on the guarded MySQL clone', function () {
         file_put_contents($malformed, 'not-an-xlsx');
         $this->phaseTwentyThreeFiles[] = $malformed;
         $this->postJson('/api/employees/import', ['type' => '1', 'file' => phaseTwentyThreeUpload($malformed)])
-            ->assertStatus(422)->assertJsonPath('errors.file.0', 'The file field must be a file of type: xlsx, csv.');
+            ->assertStatus(422)->assertJsonPath('data.file.0', 'The file field must be a file of type: xlsx, csv.');
     });
 });

@@ -196,16 +196,16 @@ it('registers the active Employee mutation routes in Laravel 10 declaration orde
         ->filter(fn ($route): bool => str_starts_with($route->uri(), 'api/employees'))
         ->reject(fn ($route): bool => $route->uri() === 'api/employees/synchronization')
         ->filter(fn ($route): bool => str_starts_with($route->getActionName(), 'App\\Http\\Controllers\\EmployeeController@'))
-        ->map(fn ($route): array => [$route->methods()[0], $route->uri(), $route->getActionName(), $route->middleware()])
+        ->map(fn ($route): array => [$route->methods()[0], $route->uri(), $route->getActionName(), $route->middleware(), $route->getName()])
         ->values()->all();
 
     expect($routes)->toBe([
-        ['GET', 'api/employees', 'App\\Http\\Controllers\\EmployeeController@index', ['api', 'auth:sanctum', 'role.access']],
-        ['POST', 'api/employees', 'App\\Http\\Controllers\\EmployeeController@create', ['api', 'auth:sanctum', 'role.access']],
-        ['GET', 'api/employees/{id}', 'App\\Http\\Controllers\\EmployeeController@show', ['api', 'auth:sanctum', 'role.access']],
-        ['POST', 'api/employees/{id}', 'App\\Http\\Controllers\\EmployeeController@update', ['api', 'auth:sanctum', 'role.access']],
-        ['DELETE', 'api/employees/{id}', 'App\\Http\\Controllers\\EmployeeController@delete', ['api', 'auth:sanctum', 'role.access']],
-        ['PUT', 'api/employees/status', 'App\\Http\\Controllers\\EmployeeController@status', ['api', 'auth:sanctum', 'role.access']],
+        ['GET', 'api/employees', 'App\\Http\\Controllers\\EmployeeController@index', ['api', 'auth:sanctum', 'role.access'], null],
+        ['POST', 'api/employees', 'App\\Http\\Controllers\\EmployeeController@create', ['api', 'auth:sanctum', 'role.access'], null],
+        ['GET', 'api/employees/{id}', 'App\\Http\\Controllers\\EmployeeController@show', ['api', 'auth:sanctum', 'role.access'], null],
+        ['POST', 'api/employees/{id}', 'App\\Http\\Controllers\\EmployeeController@update', ['api', 'auth:sanctum', 'role.access'], 'employees.update'],
+        ['DELETE', 'api/employees/{id}', 'App\\Http\\Controllers\\EmployeeController@delete', ['api', 'auth:sanctum', 'role.access'], null],
+        ['PUT', 'api/employees/status', 'App\\Http\\Controllers\\EmployeeController@status', ['api', 'auth:sanctum', 'role.access'], null],
     ]);
 });
 
@@ -301,22 +301,61 @@ describe('Employee mutations on the guarded MySQL clone', function () {
         expect((int) phaseNineteenConnection()->table('user_notes')->where('user_id', $userId)->value('giver_id'))->toBe($actor->id);
     });
 
-    it('updates the core row and clears every omitted nested domain exactly as source', function () {
-        $actor = phaseNineteenActingAs(1, ['create' => true, 'update' => false]);
+    it('updates the core row and retains every omitted nested domain under the new source contract', function () {
+        $actor = phaseNineteenActingAs(1, ['create' => false, 'update' => true]);
         $userId = phaseNineteenFixtureEmployee();
         phaseNineteenSeedAllChildren($userId, $actor->id);
+
+        $before = collect(phaseNineteenChildTables())->mapWithKeys(
+            fn (string $table): array => [$table => phaseNineteenConnection()->table($table)->where('user_id', $userId)->count()],
+        );
 
         $this->postJson("/api/employees/{$userId}", phaseNineteenUpdatePayload($userId))
             ->assertOk()->assertExactJson(['code' => 200, 'message' => 'Pegawai berhasil diubah.', 'data' => null]);
 
         expect(phaseNineteenConnection()->table('users')->where('id', $userId)->value('name'))->toBe('Phase 19 Updated Employee');
-        foreach (phaseNineteenChildTables() as $table) {
-            expect(phaseNineteenConnection()->table($table)->where('user_id', $userId)->count(), $table)->toBe(0);
+        foreach ($before as $table => $count) {
+            expect(phaseNineteenConnection()->table($table)->where('user_id', $userId)->count(), $table)->toBe($count);
         }
     });
 
+    it('treats an explicit empty nested collection as a clear without touching omitted collections', function () {
+        $actor = phaseNineteenActingAs(1, ['update' => true]);
+        $userId = phaseNineteenFixtureEmployee();
+        phaseNineteenSeedAllChildren($userId, $actor->id);
+
+        $this->postJson("/api/employees/{$userId}", phaseNineteenUpdatePayload($userId, ['educations' => []]))
+            ->assertOk();
+
+        expect(phaseNineteenConnection()->table('user_educations')->where('user_id', $userId)->count())->toBe(0)
+            ->and(phaseNineteenConnection()->table('user_families')->where('user_id', $userId)->count())->toBe(1)
+            ->and(phaseNineteenConnection()->table('position_history_users')->where('user_id', $userId)->count())->toBe(1);
+    });
+
+    it('treats a multipart empty collection marker as an explicit clear', function () {
+        $actor = phaseNineteenActingAs(3, ['update' => true]);
+        $userId = phaseNineteenFixtureEmployee(3);
+        phaseNineteenSeedAllChildren($userId, $actor->id);
+
+        $this->post("/api/employees/{$userId}", phaseNineteenUpdatePayload($userId, [
+            'type' => '3',
+            'educations' => '',
+        ]))
+            ->assertOk();
+
+        expect(phaseNineteenConnection()->table('user_educations')->where('user_id', $userId)->count())->toBe(0)
+            ->and(phaseNineteenConnection()->table('user_families')->where('user_id', $userId)->count())->toBe(1);
+    });
+
+    it('selects the matching type-specific update permission', function (int $type) {
+        phaseNineteenActingAs($type, ['create' => false, 'update' => true]);
+        $userId = phaseNineteenFixtureEmployee($type);
+
+        $this->postJson("/api/employees/{$userId}", phaseNineteenUpdatePayload($userId, ['type' => (string) $type]))->assertOk();
+    })->with(['ASN' => 1, 'Non ASN' => 2, 'Outsourcing' => 3]);
+
     it('preserves update replacement, insertion, deletion, and unscoped child id behavior', function () {
-        phaseNineteenActingAs(1, ['create' => true]);
+        phaseNineteenActingAs(1, ['update' => true]);
         $firstUserId = phaseNineteenFixtureEmployee();
         $secondUserId = phaseNineteenFixtureEmployee();
         $firstEducationId = phaseNineteenConnection()->table('user_educations')->insertGetIdTs(['user_id' => $firstUserId, 'name' => 'First child']);
@@ -382,12 +421,17 @@ describe('Employee mutations on the guarded MySQL clone', function () {
         }
     });
 
-    it('preserves validation messages and POST to create permission authorization', function () {
+    it('preserves validation messages and applies update permission to the named POST update route', function () {
         phaseNineteenActingAs(1, ['create' => true, 'update' => false]);
         $this->postJson('/api/employees', ['type' => 1])->assertStatus(422)
             ->assertJsonPath('message', 'Nama tidak boleh kosong.');
 
         $userId = phaseNineteenFixtureEmployee();
+        $this->postJson("/api/employees/{$userId}", phaseNineteenUpdatePayload($userId))
+            ->assertStatus(403)
+            ->assertJsonPath('message', "Access denied. You don't have permission to update Data Pegawai - ASN.");
+
+        phaseNineteenActingAs(1, ['create' => false, 'update' => true]);
         $this->postJson("/api/employees/{$userId}", phaseNineteenUpdatePayload($userId))->assertOk();
     });
 
@@ -447,7 +491,7 @@ describe('Employee mutations on the guarded MySQL clone', function () {
     });
 
     it('uses fake S3, persists generated paths, and leaves objects orphaned when DB fields are cleared', function () {
-        phaseNineteenActingAs(1, ['create' => true]);
+        phaseNineteenActingAs(1, ['create' => true, 'update' => true]);
         $payload = array_merge(phaseNineteenEmployeePayload(1), [
             'photo_profile' => UploadedFile::fake()->image('profile.jpg', 350, 500)->size(100),
             'employee_id_card' => UploadedFile::fake()->create('card.pdf', 100, 'application/pdf'),

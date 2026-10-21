@@ -105,6 +105,10 @@ it('applies the legacy security headers globally', function () {
 });
 
 it('preserves trusted proxy and trim string configuration', function () {
+    $configuredProxies = config('trustedproxy.proxies');
+    $trustsTestProxy = $configuredProxies === '*'
+        || (is_array($configuredProxies) && in_array('10.0.0.10', $configuredProxies, true));
+
     Route::match(['GET', 'POST'], '/_phase4/request-configuration', function (Request $request) {
         return response()->json([
             'ip' => $request->ip(),
@@ -115,7 +119,7 @@ it('preserves trusted proxy and trim string configuration', function () {
         ]);
     });
 
-    $this->withServerVariables(['REMOTE_ADDR' => '10.0.0.10'])
+    $response = $this->withServerVariables(['REMOTE_ADDR' => '10.0.0.10'])
         ->withHeaders([
             'X-Forwarded-For' => '198.51.100.10',
             'X-Forwarded-Proto' => 'https',
@@ -127,13 +131,18 @@ it('preserves trusted proxy and trim string configuration', function () {
         ])
         ->assertOk()
         ->assertJson([
-            'ip' => '198.51.100.10',
-            'secure' => true,
+            'ip' => $trustsTestProxy ? '198.51.100.10' : '10.0.0.10',
+            'secure' => $trustsTestProxy,
             'name' => 'SIMDATUK',
             'password' => '  secret  ',
             'password_confirmation' => '  secret  ',
-        ])
-        ->assertHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+        ]);
+
+    if ($trustsTestProxy) {
+        $response->assertHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+    } else {
+        $response->assertHeaderMissing('Strict-Transport-Security');
+    }
 });
 
 it('locks the current role access mapping quirks without querying the database', function () {

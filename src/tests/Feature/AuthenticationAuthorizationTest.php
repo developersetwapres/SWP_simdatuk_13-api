@@ -265,7 +265,7 @@ it('issues a web token and revokes previous token and device sessions on login',
         ->assertJsonPath('code', 200)
         ->assertJsonPath('message', 'Pengguna berhasil login.')
         ->assertJsonPath('user.id', $user->id)
-        ->assertJsonPath('user.photo_profile', 'http://localhost:8000/img/profile.jpg')
+        ->assertJsonPath('user.photo_profile', url('/img/profile.jpg'))
         ->assertJsonPath('user.role.id', $roleId)
         ->assertJsonPath('user.permissions.0.name', 'Master Data - Data Pengguna')
         ->assertJsonPath('device_info.device_type', 'Mobile Device')
