@@ -355,6 +355,7 @@ class ExportController extends Controller
         $exportData['permissions'] = $this->getUserViewPermissions();
 
         $pdf = Pdf::loadview('exports/user', $exportData);
+
         $pdf->set_option('isHtml5ParserEnabled', true);
         $pdf->set_paper("A4", "portrait");
         $pdf->set_option('isRemoteEnabled', true);
@@ -363,6 +364,7 @@ class ExportController extends Controller
         $pdf->set_option('tempDir', $tmp);
         return $pdf->download($employee->name . '_' . $employee->employee_id_number . '.pdf');
     }
+
     /**
      * Export Detail DRH Employee
      *
@@ -386,6 +388,7 @@ class ExportController extends Controller
      * @bodyParam grade_range int[] Refers to duration of grade in years. Example: ["5-10"]
      * @bodyParam employment_status int[] Refers to employment status of employee (1=Aktif, 2=Pensiun, 3=Berhenti, 4=Meninggal, 5=Alih Status ,6=Aktif PS ,7=CLTN ,8=TBLN ,9=Non Aktif). Example: [1, 3]
      **/
+
     public function zipDetailEmployee(ExportZipEmployeesRequest $request)
     {
         ini_set('memory_limit', '-1');
@@ -559,7 +562,7 @@ class ExportController extends Controller
         if (! $publicDisk->exists($directory)) {
             $publicDisk->makeDirectory($directory);
         }
-        $zipFileLocation = $publicDisk->path($directory.'/'.$zipFileName);
+        $zipFileLocation = $publicDisk->path($directory . '/' . $zipFileName);
         $zip = new ZipArchive;
         if ($zip->open($zipFileLocation, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
             throw new \RuntimeException('Unable to create Employee ZIP archive.');
@@ -781,9 +784,9 @@ class ExportController extends Controller
 
             $pdfFileName = $employee[$employeeId]->name . '_' . $employee[$employeeId]->employee_id_number . '.pdf';
             $pdfFilePath = 'public/document/' . $pdfFileName;
-            $publicDisk->put('document/'.$pdfFileName, $pdfContent);
+            $publicDisk->put('document/' . $pdfFileName, $pdfContent);
             $pdfFiles[] = $pdfFilePath;
-            $zip->addFile($publicDisk->path('document/'.$pdfFileName), $pdfFileName);
+            $zip->addFile($publicDisk->path('document/' . $pdfFileName), $pdfFileName);
         }
         $zip->close();
         foreach ($pdfFiles as $pdfFile) {
@@ -1819,6 +1822,7 @@ class ExportController extends Controller
                 'userData' => collect($results),
                 'toggleField' => $toggleFieldBio,
             ]);
+
             $pdf->setOption('isHtml5ParserEnabled', true);
             $pdf->setPaper("A4", "landscape");
             $pdf->setOption('isRemoteEnabled', true);
