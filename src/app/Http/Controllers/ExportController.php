@@ -356,12 +356,12 @@ class ExportController extends Controller
 
         $pdf = Pdf::loadview('exports/user', $exportData);
 
-        $pdf->set_option('isHtml5ParserEnabled', true);
-        $pdf->set_paper("A4", "portrait");
-        $pdf->set_option('isRemoteEnabled', true);
-        $pdf->set_option('fontDir', $tmp);
-        $pdf->set_option('fontCache', $tmp);
-        $pdf->set_option('tempDir', $tmp);
+        $pdf->setOption('isHtml5ParserEnabled', true);
+        $pdf->setPaper('A4', 'portrait');
+        $pdf->setOption('isRemoteEnabled', true);
+        $pdf->setOption('fontDir', $tmp);
+        $pdf->setOption('fontCache', $tmp);
+        $pdf->setOption('tempDir', $tmp);
         return $pdf->download($employee->name . '_' . $employee->employee_id_number . '.pdf');
     }
 
