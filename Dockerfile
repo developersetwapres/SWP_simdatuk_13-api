@@ -54,6 +54,10 @@ ENV TZ=Asia/Jakarta
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
+# Load custom PHP configuration
+COPY docker/php.ini /etc/php84/conf.d/99-custom.ini
+
+
 # =========================================================
 # 3. APPLICATION SOURCE
 # =========================================================
