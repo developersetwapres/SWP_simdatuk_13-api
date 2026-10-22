@@ -27,6 +27,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 use PhpOffice\PhpSpreadsheet\Writer\Csv;
@@ -354,7 +355,18 @@ class ExportController extends Controller
 
         $exportData['permissions'] = $this->getUserViewPermissions();
 
-        $pdf = Pdf::loadview('exports/user', $exportData);
+        $start = microtime(true);
+
+        Log::info('PDF 1 - Mulai loadView', [
+            'employee_id' => $employeeId,
+        ]);
+
+        $pdf = Pdf::loadView('exports/user', $exportData);
+
+        Log::info('PDF 2 - loadView selesai', [
+            'duration' => round(microtime(true) - $start, 2),
+            'memory_mb' => round(memory_get_usage(true) / 1048576, 2),
+        ]);
 
         $pdf->setOption('isHtml5ParserEnabled', true);
         $pdf->setPaper('A4', 'portrait');
@@ -362,7 +374,38 @@ class ExportController extends Controller
         $pdf->setOption('fontDir', $tmp);
         $pdf->setOption('fontCache', $tmp);
         $pdf->setOption('tempDir', $tmp);
-        return $pdf->download($employee->name . '_' . $employee->employee_id_number . '.pdf');
+
+        Log::info('PDF 3 - Mulai render');
+
+        $pdf->render();
+
+        Log::info('PDF 4 - Render selesai', [
+            'duration' => round(microtime(true) - $start, 2),
+            'memory_mb' => round(memory_get_usage(true) / 1048576, 2),
+            'peak_mb' => round(memory_get_peak_usage(true) / 1048576, 2),
+        ]);
+
+        $output = $pdf->output();
+
+        Log::info('PDF 5 - Output selesai', [
+            'duration' => round(microtime(true) - $start, 2),
+            'size_bytes' => strlen($output),
+        ]);
+
+        return response($output, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="employee.pdf"',
+        ]);
+
+        // $pdf = Pdf::loadview('exports/user', $exportData);
+
+        // $pdf->setOption('isHtml5ParserEnabled', true);
+        // $pdf->setPaper('A4', 'portrait');
+        // $pdf->setOption('isRemoteEnabled', true);
+        // $pdf->setOption('fontDir', $tmp);
+        // $pdf->setOption('fontCache', $tmp);
+        // $pdf->setOption('tempDir', $tmp);
+        // return $pdf->download($employee->name . '_' . $employee->employee_id_number . '.pdf');
     }
 
     /**
