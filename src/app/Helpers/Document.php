@@ -27,4 +27,18 @@ trait Document
 
         return url('/api/image/'.ltrim((string) $path, '/'));
     }
+
+    public function getDocumentDataUri(string $path): string
+    {
+        $path = ltrim($path, '/');
+        $disk = Storage::disk('s3');
+        $contents = $disk->get($path);
+        $mimeType = $disk->mimeType($path);
+
+        if (! is_string($contents) || ! is_string($mimeType) || ! str_starts_with($mimeType, 'image/')) {
+            throw new \RuntimeException("Unable to embed image document [{$path}] in PDF.");
+        }
+
+        return 'data:'.$mimeType.';base64,'.base64_encode($contents);
+    }
 }
