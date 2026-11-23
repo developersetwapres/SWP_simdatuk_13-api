@@ -465,7 +465,7 @@ class EmployeeController extends Controller
             if (isset($this->posted['employee_id_card']) && is_file($this->posted['employee_id_card'])) {
                 $this->posted['employee_id_card'] = $this->uploadDocument($this->posted['employee_id_card'], 'employee_id_card', $this->request->employee_id_number);
                 unset($this->posted['delete_employee_id_card']);
-            } else if ($this->posted['delete_employee_id_card'] == true) {
+            } else if (($this->posted['delete_employee_id_card'] ?? false) == true) {
                 $this->posted['employee_id_card'] = null;
                 unset($this->posted['delete_employee_id_card']);
             } else {
@@ -546,7 +546,7 @@ class EmployeeController extends Controller
 
             $user = $user->updateTs($this->posted);
 
-            if (isset($this->request->educations)) {
+            if ($this->request->has('educations') && is_array($this->request->educations)) {
                 $educations = array();
                 // Get existing data
                 $userEducations = DB::table('user_educations')
@@ -600,13 +600,13 @@ class EmployeeController extends Controller
                 if (count($educations) > 0) {
                     DB::table('user_educations')->insertTs($educations);
                 }
-            } else {
+            } elseif ($this->request->has('educations')) {
                 DB::table('user_educations')
                     ->where('user_id', $this->request->id)
                     ->delete();
             }
 
-            if (isset($this->request->positions)) {
+            if ($this->request->has('positions') && is_array($this->request->positions)) {
                 // Get existing data
                 $userPositions = DB::table('position_history_users')
                     ->where('user_id', $this->request->id)
@@ -634,13 +634,13 @@ class EmployeeController extends Controller
                         DB::table('position_history_users')->where('id', $position['id'])->updateTs($position);
                     }
                 }
-            } else {
+            } elseif ($this->request->has('positions')) {
                 DB::table('position_history_users')
                     ->where('user_id', $this->request->id)
                     ->delete();
             }
 
-            if (isset($this->request->grades)) {
+            if ($this->request->has('grades') && is_array($this->request->grades)) {
                 // Get existing data
                 $userGrades = DB::table('grade_history_users')
                     ->where('user_id', $this->request->id)
@@ -668,13 +668,13 @@ class EmployeeController extends Controller
                         DB::table('grade_history_users')->where('id', $grade['id'])->updateTs($grade);
                     }
                 }
-            } else {
+            } elseif ($this->request->has('grades')) {
                 DB::table('grade_history_users')
                     ->where('user_id', $this->request->id)
                     ->delete();
             }
 
-            if (isset($this->request->families)) {
+            if ($this->request->has('families') && is_array($this->request->families)) {
                 $families = array();
                 // Get existing data
                 $userFamilies = DB::table('user_families')
@@ -701,13 +701,13 @@ class EmployeeController extends Controller
                 if (count($families) > 0) {
                     DB::table('user_families')->insertTs($families);
                 }
-            } else {
+            } elseif ($this->request->has('families')) {
                 DB::table('user_families')
                     ->where('user_id', $this->request->id)
                     ->delete();
             }
 
-            if (isset($this->request->leaves)) {
+            if ($this->request->has('leaves') && is_array($this->request->leaves)) {
                 $leaves = array();
                 // Get existing data
                 $userLeaves = DB::table('user_leaves')
@@ -743,13 +743,13 @@ class EmployeeController extends Controller
                 if (count($leaves) > 0) {
                     DB::table('user_leaves')->insertTs($leaves);
                 }
-            } else {
+            } elseif ($this->request->has('leaves')) {
                 DB::table('user_leaves')
                     ->where('user_id', $this->request->id)
                     ->delete();
             }
 
-            if (isset($this->request->notes)) {
+            if ($this->request->has('notes') && is_array($this->request->notes)) {
                 $notes = array();
                 // Get existing data
                 $userNotes = DB::table('user_notes')
@@ -777,13 +777,13 @@ class EmployeeController extends Controller
                 if (count($notes) > 0) {
                     DB::table('user_notes')->insertTs($notes);
                 }
-            } else {
+            } elseif ($this->request->has('notes')) {
                 DB::table('user_notes')
                     ->where('user_id', $this->request->id)
                     ->delete();
             }
 
-            if (isset($this->request->credits)) {
+            if ($this->request->has('credits') && is_array($this->request->credits)) {
                 $credits = array();
                 // Get existing data
                 $userCredits = DB::table('user_credits')
@@ -810,13 +810,13 @@ class EmployeeController extends Controller
                 if (count($credits) > 0) {
                     DB::table('user_credits')->insertTs($credits);
                 }
-            } else {
+            } elseif ($this->request->has('credits')) {
                 DB::table('user_credits')
                     ->where('user_id', $this->request->id)
                     ->delete();
             }
 
-            if (isset($this->request->assessments)) {
+            if ($this->request->has('assessments') && is_array($this->request->assessments)) {
                 $assessments = array();
                 // Get existing data
                 $userAssessments = DB::table('user_assessments')
@@ -852,13 +852,13 @@ class EmployeeController extends Controller
                 if (count($assessments) > 0) {
                     DB::table('user_assessments')->insertTs($assessments);
                 }
-            } else {
+            } elseif ($this->request->has('assessments')) {
                 DB::table('user_assessments')
                     ->where('user_id', $this->request->id)
                     ->delete();
             }
 
-            if (isset($this->request->competencies)) {
+            if ($this->request->has('competencies') && is_array($this->request->competencies)) {
                 $competencies = array();
                 // Get existing data
                 $userCompetencies = DB::table('user_competencies')
@@ -894,13 +894,13 @@ class EmployeeController extends Controller
                 if (count($competencies) > 0) {
                     DB::table('user_competencies')->insertTs($competencies);
                 }
-            } else {
+            } elseif ($this->request->has('competencies')) {
                 DB::table('user_competencies')
                     ->where('user_id', $this->request->id)
                     ->delete();
             }
 
-            if (isset($this->request->talents)) {
+            if ($this->request->has('talents') && is_array($this->request->talents)) {
                 $talents = array();
                 // Get existing data
                 $userTalents = DB::table('user_talents')
@@ -936,13 +936,13 @@ class EmployeeController extends Controller
                 if (count($talents) > 0) {
                     DB::table('user_talents')->insertTs($talents);
                 }
-            } else {
+            } elseif ($this->request->has('talents')) {
                 DB::table('user_talents')
                     ->where('user_id', $this->request->id)
                     ->delete();
             }
 
-            if (isset($this->request->structurals)) {
+            if ($this->request->has('structurals') && is_array($this->request->structurals)) {
                 // Get existing data
                 $userTrainings = DB::table('training_history_users')
                     ->leftJoin('training_histories', 'training_histories.id', '=', 'training_history_users.training_history_id')
@@ -972,7 +972,7 @@ class EmployeeController extends Controller
                         DB::table('training_history_users')->where('id', $training['id'])->updateTs($training);
                     }
                 }
-            } else {
+            } elseif ($this->request->has('structurals')) {
                 DB::table('training_history_users')
                     ->leftJoin('training_histories', 'training_histories.id', '=', 'training_history_users.training_history_id')
                     ->where('training_history_users.user_id', $this->request->id)
@@ -980,7 +980,7 @@ class EmployeeController extends Controller
                     ->delete();
             }
 
-            if (isset($this->request->functionals)) {
+            if ($this->request->has('functionals') && is_array($this->request->functionals)) {
                 // Get existing data
                 $userTrainings = DB::table('training_history_users')
                     ->leftJoin('training_histories', 'training_histories.id', '=', 'training_history_users.training_history_id')
@@ -1010,7 +1010,7 @@ class EmployeeController extends Controller
                         DB::table('training_history_users')->where('id', $training['id'])->updateTs($training);
                     }
                 }
-            } else {
+            } elseif ($this->request->has('functionals')) {
                 DB::table('training_history_users')
                     ->leftJoin('training_histories', 'training_histories.id', '=', 'training_history_users.training_history_id')
                     ->where('training_history_users.user_id', $this->request->id)
@@ -1018,7 +1018,7 @@ class EmployeeController extends Controller
                     ->delete();
             }
 
-            if (isset($this->request->technicals)) {
+            if ($this->request->has('technicals') && is_array($this->request->technicals)) {
                 // Get existing data
                 $userTrainings = DB::table('training_history_users')
                     ->leftJoin('training_histories', 'training_histories.id', '=', 'training_history_users.training_history_id')
@@ -1048,7 +1048,7 @@ class EmployeeController extends Controller
                         DB::table('training_history_users')->where('id', $training['id'])->updateTs($training);
                     }
                 }
-            } else {
+            } elseif ($this->request->has('technicals')) {
                 DB::table('training_history_users')
                     ->leftJoin('training_histories', 'training_histories.id', '=', 'training_history_users.training_history_id')
                     ->where('training_history_users.user_id', $this->request->id)
@@ -1056,7 +1056,7 @@ class EmployeeController extends Controller
                     ->delete();
             }
 
-            if (isset($this->request->recognitions)) {
+            if ($this->request->has('recognitions') && is_array($this->request->recognitions)) {
                 // Get existing data
                 $userRecognitions = DB::table('recognition_history_users')
                     ->where('user_id', $this->request->id)
@@ -1068,13 +1068,13 @@ class EmployeeController extends Controller
                 $array2 = Arr::pluck($this->request->recognitions, 'id');
                 $result = array_diff($array1, $array2);
                 DB::table('recognition_history_users')->whereIn('id', $result)->delete();
-            } else {
+            } elseif ($this->request->has('recognitions')) {
                 DB::table('recognition_history_users')
                     ->where('user_id', $this->request->id)
                     ->delete();
             }
 
-            if (isset($this->request->targets)) {
+            if ($this->request->has('targets') && is_array($this->request->targets)) {
                 // Get existing data
                 $userTargets = DB::table('target_history_users')
                     ->where('user_id', $this->request->id)
@@ -1093,13 +1093,13 @@ class EmployeeController extends Controller
                         DB::table('target_history_users')->where('id', $target['id'])->updateTs($target);
                     }
                 }
-            } else {
+            } elseif ($this->request->has('targets')) {
                 DB::table('target_history_users')
                     ->where('user_id', $this->request->id)
                     ->delete();
             }
 
-            if (isset($this->request->performances)) {
+            if ($this->request->has('performances') && is_array($this->request->performances)) {
                 // Get existing data
                 $userPerformances = DB::table('performance_history_users')
                     ->where('user_id', $this->request->id)
@@ -1118,13 +1118,13 @@ class EmployeeController extends Controller
                         DB::table('performance_history_users')->where('id', $performance['id'])->updateTs($performance);
                     }
                 }
-            } else {
+            } elseif ($this->request->has('performances')) {
                 DB::table('performance_history_users')
                     ->where('user_id', $this->request->id)
                     ->delete();
             }
 
-            if (isset($this->request->disciplinaries)) {
+            if ($this->request->has('disciplinaries') && is_array($this->request->disciplinaries)) {
                 // Get existing data
                 $userDisciplinaries = DB::table('disciplinary_history_users')
                     ->where('user_id', $this->request->id)
@@ -1143,7 +1143,7 @@ class EmployeeController extends Controller
                         DB::table('disciplinary_history_users')->where('id', $disciplinary['id'])->updateTs($disciplinary);
                     }
                 }
-            } else {
+            } elseif ($this->request->has('disciplinaries')) {
                 DB::table('disciplinary_history_users')
                     ->where('user_id', $this->request->id)
                     ->delete();

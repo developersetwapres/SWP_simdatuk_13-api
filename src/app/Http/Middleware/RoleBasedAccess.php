@@ -101,6 +101,10 @@ class RoleBasedAccess
 
     private function getRequiredAction(Request $request): string
     {
+        if ($request->routeIs('employees.update')) {
+            return 'update';
+        }
+
         return match ($request->getMethod()) {
             'GET' => 'read',
             'POST' => 'create',

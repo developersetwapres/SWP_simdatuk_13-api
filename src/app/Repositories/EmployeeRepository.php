@@ -9,7 +9,7 @@ class EmployeeRepository
 {
     use Document;
 
-    public function getDetail(int|string $userId, bool $export = false): ?object
+    public function getDetail(int|string $userId, bool $export = false, bool $embedPhoto = false): ?object
     {
         $user = DB::table('users as u');
         $user->leftJoin('positions as p', 'u.position_id', '=', 'p.id');
@@ -152,7 +152,9 @@ class EmployeeRepository
         $user = $user->first();
 
         if (isset($user->photo_profile)) {
-            $user->photo_profile = $this->getDocument($user->photo_profile, true, $export);
+            $user->photo_profile = $embedPhoto
+                ? $this->getDocumentDataUri($user->photo_profile)
+                : $this->getDocument($user->photo_profile, true, $export);
         }
 
         if (isset($user->employee_id_card)) {
@@ -219,7 +221,7 @@ class EmployeeRepository
 
         return implode(', ', $names);
     }
-    public function getDetailBulkUser($usersID, $export = false)
+    public function getDetailBulkUser($usersID, $export = false, bool $embedPhoto = false)
     {
         $user = DB::table('users as u');
         $user->leftJoin('positions as p', 'u.position_id', '=', 'p.id');
@@ -364,7 +366,9 @@ class EmployeeRepository
         $newUsers = [];
         foreach ($users as $key => $user) {
             if (isset($user->photo_profile)) {
-                if ($export == true) {
+                if ($embedPhoto) {
+                    $user->photo_profile = $this->getDocumentDataUri($user->photo_profile);
+                } else if ($export == true) {
                     $user->photo_profile = $this->getDocument($user->photo_profile, true, true);
                 } else {
                     $user->photo_profile = $this->getDocument($user->photo_profile, true);

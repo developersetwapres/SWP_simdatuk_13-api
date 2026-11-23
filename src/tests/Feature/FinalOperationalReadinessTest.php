@@ -20,7 +20,7 @@ it('keeps Composer lifecycle scripts free of database schema commands', function
         ->not->toContain('db:seed')
         ->not->toContain('migrate --graceful');
 
-    expect(file_get_contents(base_path('README.md')))
+    expect(file_get_contents(base_path('../README.md')))
         ->toContain('DO NOT RUN `php artisan migrate`')
         ->toContain('No database migration or seeding command belongs in this sequence.');
 });

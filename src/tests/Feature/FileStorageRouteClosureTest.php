@@ -18,8 +18,8 @@ it('registers the three public Phase 24 routes with source handlers and order', 
 
 it('returns the exact public plain-text API probe', function () {
     $this->get('/api')->assertOk()->assertHeader('content-type', 'text/html; charset=UTF-8')
-        ->assertSeeText('api enabled!', false);
-    expect($this->get('/api')->getContent())->toBe('api enabled!');
+        ->assertSeeText('Simdatuk Setwapres API is running successfully and ready to serve requests.', false);
+    expect($this->get('/api')->getContent())->toBe('Simdatuk Setwapres API is running successfully and ready to serve requests.');
 });
 
 it('streams image PDF nested and encoded object paths from fake s3 without disposition', function (string $path, string $mime, string $contents) {
