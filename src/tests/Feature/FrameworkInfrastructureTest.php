@@ -42,6 +42,9 @@ it('registers the SIMDATUK middleware aliases and API middleware order', functio
 });
 
 it('registers the named API limiter and query macros', function () {
+    config()->set('app.rate_limit_api_attempts', 100);
+    config()->set('app.rate_limit_api_decay_minutes', 2);
+
     $request = Request::create('/api/probe', 'GET', server: [
         'REMOTE_ADDR' => '203.0.113.10',
     ]);
@@ -50,13 +53,30 @@ it('registers the named API limiter and query macros', function () {
 
     expect($limit)
         ->toBeInstanceOf(Limit::class)
-        ->and($limit->maxAttempts)->toBe(60)
-        ->and($limit->decaySeconds)->toBe(60)
+        ->and($limit->maxAttempts)->toBe(100)
+        ->and($limit->decaySeconds)->toBe(120)
         ->and($limit->key)->toBe('203.0.113.10')
         ->and(Builder::hasMacro('insertTs'))->toBeTrue()
         ->and(Builder::hasMacro('insertGetIdTs'))->toBeTrue()
         ->and(Builder::hasMacro('updateTs'))->toBeTrue()
         ->and(Builder::hasMacro('deleteTs'))->toBeTrue();
+});
+
+it('uses the configured authentication rate limit by default', function () {
+    config()->set('app.rate_limit_auth_attempts', 1);
+    config()->set('app.rate_limit_auth_decay_minutes', 1);
+
+    $middleware = app(ApiRateLimit::class);
+    $request = Request::create('/api/login', 'POST', server: [
+        'REMOTE_ADDR' => '198.51.100.21',
+        'SERVER_NAME' => 'simdatuk.test',
+    ]);
+
+    $middleware->handle($request, fn () => response()->json(['accepted' => true]));
+    $limitedResponse = $middleware->handle($request, fn () => response()->json(['accepted' => true]));
+
+    expect($limitedResponse->getStatusCode())->toBe(429)
+        ->and($limitedResponse->headers->get('X-RateLimit-Limit'))->toBe('1');
 });
 
 it('preserves the custom limiter headers and 429 envelope', function () {

@@ -17,8 +17,8 @@ class ApiRateLimit
         ?int $maxAttempts = null,
         ?int $decayMinutes = null,
     ): Response {
-        $maxAttempts ??= config('app.rate_limit_api_attempts', 60);
-        $decayMinutes ??= config('app.rate_limit_api_decay_minutes', 1);
+        $maxAttempts ??= config('app.rate_limit_auth_attempts', 5);
+        $decayMinutes ??= config('app.rate_limit_auth_decay_minutes', 1);
 
         $ip = $this->getRealIpAddress($request);
         $key = $this->resolveRequestSignature($request, $ip);

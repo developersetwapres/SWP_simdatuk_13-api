@@ -158,7 +158,7 @@ it('registers the Phase 6 auth routes with legacy middleware composition', funct
     $loginMiddleware = $router->gatherRouteMiddleware($routes['api/login']);
     $logoutMiddleware = $router->gatherRouteMiddleware($routes['api/logout']);
 
-    expect($loginMiddleware)->toContain(ApiRateLimit::class.':5,1')
+    expect($loginMiddleware)->toContain(ApiRateLimit::class)
         ->and($loginMiddleware)->not->toContain(RoleBasedAccess::class)
         ->and($logoutMiddleware)->toContain(RoleBasedAccess::class)
         ->and($logoutMiddleware)->not->toContain(ValidateDeviceSession::class);

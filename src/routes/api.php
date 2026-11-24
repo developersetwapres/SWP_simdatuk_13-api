@@ -45,7 +45,7 @@ Route::get('/', function () {
     return 'Simdatuk Setwapres API is running successfully and ready to serve requests.';
 });
 
-Route::middleware(['api.rate.limit:5,1'])->group(function (): void {
+Route::middleware(['api.rate.limit'])->group(function (): void {
     Route::post('login', [AuthController::class, 'login']);
     Route::post('forgot-password', [AuthController::class, 'forgotPassword']);
     Route::post('reset-password', [AuthController::class, 'resetPassword']);
